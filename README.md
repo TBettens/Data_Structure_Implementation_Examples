@@ -41,4 +41,4 @@
         3. Instance Attributes
         4. Class Attributes
         5. Three-way Comparison
-        6. Life-Space Tracing
+        6. Life-Span Tracing
