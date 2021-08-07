@@ -35,7 +35,7 @@
         4. Deep vs Shallow copies (move semantics)
         5. Recursion Examples via an Extended Interface 
 5. **Student**
-    1. class Student is used as the kinds of object to store in the above Data Structures 
+    1. class Student is used as the kind of object to store in the above Data Structures 
         1. Copy and Move Constructors
         2. Copy and Move Assignment
         3. Instance Attributes
