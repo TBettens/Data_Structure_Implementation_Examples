@@ -23,7 +23,7 @@
 
 namespace
 {
-  // A simple demonstration highlight the interfaces, similarities, and differences between Stacks and Queues.  Because Stacks and
+  // A simple demonstration to highlight the interfaces, similarities, and differences between Stacks and Queues.  Because Stacks and
   // Queues have (nearly) the same interface, the same demo driver is used for both.  The container tested is intentionally passed by
   // value (makes a local copy using the Stack's or Queue's copy constructor).
 
@@ -104,7 +104,7 @@ int main()
     **  STACKS
     *******************************************************************************************************************************/
     /////////////////// Stacks over lists //////////////////////
-    { Stack<Student> myStack;                               // empty stack where stack is implemented over a singly linked list (the default)
+    { Stack<Student, SinglyLinkedList<Student>> myStack;   // empty stack where stack is implemented over a singly linked list
       demo( myStack );
     }
 
@@ -127,7 +127,7 @@ int main()
 
 
     /////////////////// Stacks over vectors //////////////////////
-    { Stack<Student, Vector<Student>> myStack;              // empty stack where stack is implemented over an extendable vector
+    { Stack<Student> myStack;                               // empty stack where stack is implemented over an extendable vector (the default)
       demo( myStack );
     }
 

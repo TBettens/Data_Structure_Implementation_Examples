@@ -83,7 +83,7 @@ namespace CSUF::CPSC131
   ** SinglyLinkedList<> Member Function Definitions
   *******************************************************************************/
   
-  // insert_before()
+  // insert_after()
   template <typename T>
   typename SinglyLinkedList<T>::iterator SinglyLinkedList<T>::insert_after( const_iterator position, T const & data )
   {

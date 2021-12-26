@@ -38,7 +38,7 @@ namespace CSUF::CPSC131
   // underlying container.
 
 
-  template<typename T, class UnderlyingContainer = CSUF::CPSC131::SinglyLinkedList<T>>
+  template<typename T, class UnderlyingContainer = CSUF::CPSC131::Vector<T>>
   class Stack
   {
     public:

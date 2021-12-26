@@ -167,43 +167,6 @@ namespace CSUF::CPSC131
 ** Separating Interface from Implementation is an extremely important concept I hope students will come to appreciate.
 ************************************************************************************************************************************
 ***********************************************************************************************************************************/
-// C++20 Transition Workaround
-//
-// Clang (well, more accurately libc++) 12.0.* and before doesn't define and implement std::compare_weak_order_fallback() yet.
-// Update this section as new versions of Clang are released that still do not implement these capabilities.
-#if defined( _LIBCPP_VERSION )
-#  if _LIBCPP_VERSION < 13'000
-#    ifndef std_compare_weak_order_fallback_definition
-#    define std_compare_weak_order_fallback_definition
-       namespace std
-       {
-         template<class T1, class T2>
-         constexpr weak_ordering  compare_weak_order_fallback( T1 && lhs, T2 && rhs ) noexcept
-         {
-           bool is_equal;
-           if constexpr( std::is_floating_point_v<std::decay_t<T1>>  &&  std::is_floating_point_v<decay_t<T2>> )   is_equal = std::abs( lhs - rhs ) < 1e-9;
-           else                                                                                                    is_equal = lhs == rhs;
-
-           return is_equal    ?  weak_ordering::equivalent
-                : lhs  < rhs  ?  weak_ordering::less
-                :                weak_ordering::greater;
-         }
-       }
-#    endif
-#  else
-#    pragma message ("A potentially obsolete C++20 workaround is present.  Either remove the workaround if no longer needed, or update the version number requiring it")
-#  endif
-#endif
-
-
-
-
-
-
-
-
-
-
 namespace CSUF::CPSC131
 {
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -883,9 +846,9 @@ namespace CSUF::CPSC131
 ***********************************************************************************************************************************/
 
 /**************************************************
-** Last modified:  27-JUL-2021
+** Last modified:  21-OCT-2021  (refactored C++20 workarounds)
 ** Last Verified:  01-AUG-2021
 ** Verified with:  MS Visual Studio 2019 Version 16.10.2 (C++20)
 **                 GCC version 11.1.1 20210721 (-std=c++20 ),
-**                 Clang version 12.0.1 (-std=c++20 -stdlib=libc++)
+**                 Clang version 13.0.0 (-std=c++20 -stdlib=libc++)
 ***************************************************/

@@ -220,46 +220,6 @@ namespace CSUF::CPSC131
 ** Separating Interface from Implementation is an extremely important concept I hope students will come to appreciate.
 ************************************************************************************************************************************
 ***********************************************************************************************************************************/
-// C++20 Transition Workaround
-//
-// Clang (well, more accurately libc++) 12.0.* and before doesn't define and implement std::compare_weak_order_fallback() yet.
-// Update this section as new versions of Clang are released that still do not implement these capabilities.
-#if defined( _LIBCPP_VERSION )
-#  if _LIBCPP_VERSION < 13'000
-#    ifndef std_compare_weak_order_fallback_definition
-#    define std_compare_weak_order_fallback_definition
-       namespace std
-       {
-         template<class T1, class T2>
-         constexpr weak_ordering  compare_weak_order_fallback( T1 && lhs, T2 && rhs ) noexcept
-         {
-           bool is_equal;
-           if constexpr( std::is_floating_point_v<std::decay_t<T1>>  &&  std::is_floating_point_v<decay_t<T2>> )   is_equal = std::abs( lhs - rhs ) < 1e-9;
-           else                                                                                                    is_equal = lhs == rhs;
-
-           return is_equal    ?  weak_ordering::equivalent
-                : lhs  < rhs  ?  weak_ordering::less
-                :                weak_ordering::greater;
-         }
-       }
-#    endif
-#  else
-#    pragma message ("A potentially obsolete C++20 workaround is present.  Either remove the workaround if no longer needed, or update the version number requiring it")
-#  endif
-#endif
-
-
-
-
-
-
-
-
-
-
-
-
-
 /************************************************************************************************************************************************************************************************************
 ** Class BinarySearchTree - a very basic example implementation of the Binary Search Tree Abstract Data Type
 **
@@ -449,7 +409,7 @@ namespace CSUF::CPSC131
 
 
 
-  // containers()
+  // contains()
   template<typename Key, typename Value>
   bool BinarySearchTree<Key, Value>::contains( const Key & key ) const
   { return find( key ) != end(); }
@@ -466,7 +426,7 @@ namespace CSUF::CPSC131
 
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  // Iterators
+  // Iterators - In-order traversal
   //
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -693,8 +653,8 @@ namespace CSUF::CPSC131
       // Programming note:  The {key, value} pair's Key is constant to protect from (unintentionally ?) altering it and thus
       //   breaking the tree's key ordering invariant.  But in this specific case, we really do need to overwrite the key's content.
       //   So let's temporarily cast away its const-ness and assign the new content
-      const_cast<Key &>( position_ptr->key  () ) =            succ_ptr->key  ()  ;
-                         position_ptr->value()   = std::move( succ_ptr->value() );
+      const_cast<Key &>( position_ptr->key  () ) =  const_cast<Key &&>( succ_ptr->key  () );
+                         position_ptr->value()   =  std::move         ( succ_ptr->value() );
       erase( succ_ptr );
       return position_ptr;                                                            // return the same node, but with updated content
     }
@@ -1038,7 +998,8 @@ namespace CSUF::CPSC131
   {
     if( current == nullptr ) return nullptr;                                          // base case
 
-    auto node    = new Node{ *current };                                              // visit
+    auto node     = new Node{ current->_pair };                                       // visit
+    node->_height = current->_height;                                                 // topology is maintained, so copy vice recalculate height
 
     node->_left  = makeCopy( current->_left );                                        // recurse left
     node->_right = makeCopy( current->_right );                                       // recurse right
@@ -1277,12 +1238,12 @@ namespace CSUF::CPSC131
 
   // The private helper function
   template<typename Key, typename Value>
-  long long int BinarySearchTree<Key, Value>::getHeight( Node * node ) const
+  long long int BinarySearchTree<Key, Value>::getHeight( Node * current ) const
   {
-    if( node == nullptr ) return -1;                                                  // Base case
+    if( current == nullptr ) return -1;                                               // Base case
 
-    auto leftHeight  = getHeight( node->_left );                                      // recurse left
-    auto rightHeight = getHeight( node->_right );                                     // recurse right
+    auto leftHeight  = getHeight( current->_left );                                   // recurse left
+    auto rightHeight = getHeight( current->_right );                                  // recurse right
 
     return 1 + std::max( leftHeight, rightHeight );                                   // visit
   }
@@ -1305,13 +1266,13 @@ namespace CSUF::CPSC131
 
   // The private helper function
   template<typename Key, typename Value>
-  void BinarySearchTree<Key, Value>::printInorder( Node * node ) const
+  void BinarySearchTree<Key, Value>::printInorder( Node * current ) const
   {
-    if( node == nullptr ) return;                                                             // Base case
+    if( current == nullptr ) return;                                                             // Base case
 
-    printInorder( node->_left );                                                              // Recurse left
-    std::cout << "Key: \"" << node->key() << "\",  Value: \"" << node->value() << "\"\n";     // Visit
-    printInorder( node->_right );                                                             // Recurse right
+    printInorder( current->_left );                                                              // Recurse left
+    std::cout << "Key: \"" << current->key() << "\",  Value: \"" << current->value() << "\"\n";  // Visit
+    printInorder( current->_right );                                                             // Recurse right
   }
 
 
@@ -1340,49 +1301,49 @@ namespace CSUF::CPSC131
 
   // The private helper function
   template<typename Key, typename Value>
-  Value BinarySearchTree<Key, Value>::getMaxValue( Node * node ) const
+  Value BinarySearchTree<Key, Value>::getMaxValue( Node * current ) const
   {
-    // can assume node is not null - it's already been checked
-    auto maxValue = node->value();
+    // can assume current is not null - it's already been checked
+    auto currentMaximum = current->value();
 
     //OPTION 1:  Use the standard max function
     {
-      if( node->_left  != nullptr ) maxValue = std::max( maxValue, getMaxValue( node->_left ) );
-      if( node->_right != nullptr ) maxValue = std::max( maxValue, getMaxValue( node->_right ) );
+      if( current->_left  != nullptr ) currentMaximum = std::max( currentMaximum, getMaxValue( current->_left ) );
+      if( current->_right != nullptr ) currentMaximum = std::max( currentMaximum, getMaxValue( current->_right ) );
     }
 
     //OPTION 2:  Use the ternary operator
     {
-      if( node->_left != nullptr )
+      if( current->_left != nullptr )
       {
-        auto leftValue = getMaxValue( node->_left );                                  // Save the answer and avoid traversing the subtree twice
-        maxValue       = leftValue > maxValue ? leftValue : maxValue;
+        auto maxLeftValue = getMaxValue( current->_left );                            // Save the answer and avoid traversing the subtree twice
+        currentMaximum    = maxLeftValue > currentMaximum ? maxLeftValue : currentMaximum;
       }
 
-      if( node->_right != nullptr )
+      if( current->_right != nullptr )
       {
-        auto rightValue = getMaxValue( node->_right );                                // Save the answer and avoid traversing the subtree twice
-        maxValue        = rightValue > maxValue ? rightValue : maxValue;
+        auto maxRightValue = getMaxValue( current->_right );                          // Save the answer and avoid traversing the subtree twice
+        currentMaximum     = maxRightValue > currentMaximum ? maxRightValue : currentMaximum;
       }
     }
 
     //OPTION 3:  Use normal if
     {
-      if( node->_left != nullptr )
+      if( current->_left != nullptr )
       {
-        auto leftValue = getMaxValue( node->_left );                                  // Save the answer and avoid traversing the subtree twice
-        if( leftValue > maxValue ) maxValue = leftValue;
+        auto maxLeftValue = getMaxValue( current->_left );                            // Save the answer and avoid traversing the subtree twice
+        if( maxLeftValue > currentMaximum ) currentMaximum = maxLeftValue;
       }
 
-      if( node->_right != nullptr )
+      if( current->_right != nullptr )
       {
-        auto rightValue = getMaxValue( node->_right );                                // Save the answer and avoid traversing the subtree twice
-        if( rightValue > maxValue ) maxValue = rightValue;
+        auto maxRightValue = getMaxValue( current->_right );                          // Save the answer and avoid traversing the subtree twice
+        if( maxRightValue > currentMaximum ) currentMaximum = maxRightValue;
       }
     }
 
     // In all cases, return the max value found
-    return maxValue;
+    return currentMaximum;
   }
 
 
@@ -1401,12 +1362,12 @@ namespace CSUF::CPSC131
 
   // The private helper function
   template<typename Key, typename Value>
-  Value BinarySearchTree<Key, Value>::getSum( Node * node ) const
+  Value BinarySearchTree<Key, Value>::getSum( Node * current ) const
   {
-    if( node == nullptr ) return Value();                                             // Base case
-    return getSum( node->_left )                                                      // recurse left
-           + node->value() +                                                          // Visit
-           getSum( node->_right );                                                    // recurse right
+    if( current == nullptr ) return Value();                                          // Base case
+    return getSum( current->_left )                                                   // recurse left
+           + current->value() +                                                       // Visit
+           getSum( current->_right );                                                 // recurse right
   }
 }    // namespace CSUF::CPSC131
 
@@ -1433,9 +1394,9 @@ namespace CSUF::CPSC131
 ***********************************************************************************************************************************/
 
 /**************************************************
-** Last modified:  27-JUL-2021
+** Last modified:  21-OCT-2021  (refactored C++20 workarounds)
 ** Last Verified:  01-AUG-2021
 ** Verified with:  MS Visual Studio 2019 Version 16.10.2 (C++20)
 **                 GCC version 11.1.1 20210721 (-std=c++20 ),
-**                 Clang version 12.0.1 (-std=c++20 -stdlib=libc++)
+**                 Clang version 13.0.0 (-std=c++20 -stdlib=libc++)
 ***************************************************/

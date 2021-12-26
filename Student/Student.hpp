@@ -6,45 +6,8 @@
 
 
 
-// C++20 Transition Workaround
-//
-// Clang (well, more accurately libc++) 12.0.* and before doesn't know how to three-way compare strings yet.
-// Update this section as new versions of Clang are released that still do not implement these capabilities.
-#if defined( _LIBCPP_VERSION )
-#  if _LIBCPP_VERSION < 13'000
-#    ifndef std_string_compare_definition
-#    define std_string_compare_definition
-#      include <compare>
-       namespace std
-       {
-         inline strong_ordering operator<=>( const string & lhs, const string & rhs)
-         {
-           int result = lhs.compare( rhs );
-           return result == 0  ?  strong_ordering::equivalent
-                : result  < 0  ?  strong_ordering::less
-                :                 strong_ordering::greater;
-         }
-       }
-#    endif
-#  else
-#    pragma message ("A potentially obsolete C++20 workaround is present.  Either remove the workaround if no longer needed, or update the version number requiring it")
-#  endif
-#endif
-
-
-
-
-
-
-
-
-
-
-
-
 namespace CSUF::CPSC131
 {
-
   class Student
   {
     friend std::ostream & operator<<( std::ostream & os, const Student & student );
@@ -109,9 +72,9 @@ namespace CSUF::CPSC131
 ***********************************************************************************************************************************/
 
 /**************************************************
-** Last modified:  27-JUL-2021
+** Last modified:  21-OCT-2021  (refactored C++20 workarounds)
 ** Last Verified:  01-AUG-2021
 ** Verified with:  MS Visual Studio 2019 Version 16.10.2 (C++20)
 **                 GCC version 11.1.1 20210721 (-std=c++20 ),
-**                 Clang version 12.0.1 (-std=c++20 -stdlib=libc++)
+**                 Clang version 13.0.0 (-std=c++20 -stdlib=libc++)
 ***************************************************/
