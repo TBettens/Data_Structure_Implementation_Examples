@@ -9,11 +9,11 @@
 #include <vector>
 
 #include "DoublyLinkedList.hpp"
-#include "Queue.hpp"
 #include "SinglyLinkedList.hpp"
-#include "Stack.hpp"
-#include "Student.hpp"
 #include "Vector.hpp"
+#include "Student.hpp"
+#include "Stack.hpp"
+#include "Queue.hpp"
 
 
 

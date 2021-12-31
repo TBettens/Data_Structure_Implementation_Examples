@@ -720,7 +720,7 @@ namespace CSUF::CPSC131
     #include "DoublyLinkedList_null_terminated.hxx"
 
   #else
-    #error A specific Singly Linked List design approach file was not found.  Looking for "SinglyLinkedList_circular.hxx" or "SinglyLinkedList_null_terminated.hxx"
+    #error A specific Doubly Linked List design approach file was not found.  Looking for "DoublyLinkedList_circular.hxx" or "DoublyLinkedList_null_terminated.hxx"
   #endif
 #endif
 
