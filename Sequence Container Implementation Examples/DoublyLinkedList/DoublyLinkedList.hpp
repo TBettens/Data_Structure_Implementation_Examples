@@ -14,7 +14,6 @@
 #include <cstddef>                                                                    // size_t
 #include <memory>                                                                     // unique_ptr, make_unique<>()
 #include <stdexcept>                                                                  // length_error
-#include <type_traits>                                                                // conditional_t, is_const_v
 #include <utility>                                                                    // swap(), move()
 
 
@@ -32,7 +31,7 @@ namespace CSUF::CPSC131
 
     private:
       // Types
-      template <typename T2> class  Iterator_type;                                    // Template class for iterator and const_iterator classes
+      template <typename U> class  Iterator_type;                                     // Template class for iterator and const_iterator classes
       struct Node;                                                                    // Specific implementations are responsible for defining their node structure
       struct PrivateMembers;                                                          // A specific implementation's private members (attributes, functions, etc)
 
@@ -110,30 +109,29 @@ namespace CSUF::CPSC131
   /*******************************************************************************
   ** Class DoublyLinkedList<T>::iterator - A doubly linked bi-directional iterator
   *******************************************************************************/
-  template<typename T1>   template<typename T2>
-  class DoublyLinkedList<T1>::Iterator_type
+  template<typename T>   template<typename U>
+  class DoublyLinkedList<T>::Iterator_type
   {
-    friend class DoublyLinkedList<T1>;
+    friend class DoublyLinkedList<T>;
 
     public:
       // Iterator Type Traits - Boilerplate stuff so the iterator can be used with the rest of the standard library
       using iterator_category = std::bidirectional_iterator_tag;
-      using value_type        = T2;
+      using value_type        = U;
       using difference_type   = std::ptrdiff_t;
-      using pointer           = std::conditional_t< std::is_const_v<T2>, T2 const *, T2 *>;
-      using reference         = std::conditional_t< std::is_const_v<T2>, T2 const &, T2 &>;
+      using pointer           = value_type *;
+      using reference         = value_type &;
 
 
       // Compiler synthesized constructors and destructor are fine, just what we want (shallow copies, no ownership) but needed to
       // explicitly say that because there is also a user defined constructor
-      Iterator_type            (                             ) = delete;              // Default constructed Iterator_type not allowed - should create end(), if we knew what that was
-      Iterator_type            ( iterator      const & other );                       // Copy constructor when T is non-const, Conversion constructor from non-const to const iterator when T is const
-      Iterator_type & operator=( Iterator_type const &       ) = default;             // Explicitly default the copy assignment operator to go with the explicitly defined copy constructor
+      Iterator_type(                        ) = delete;                               // Default constructed Iterator_type not allowed - should create end(), if we knew what that was
+      Iterator_type( iterator const & other );                                        // Copy constructor when T is non-const, Conversion constructor from non-const to const iterator when T is const
 
       // Pre and post Increment operators move the position to the next node in the list
       Iterator_type & operator++();                                                   // advance the iterator one node (pre -increment)
       Iterator_type   operator++( int );                                              // advance the iterator one node (post-increment)
-
+                                                                                      // Note parameter type is intentionally "iterator", not "Iterator_type"
       // Pre and post Decrement operators move the position to the previous node in the list
       Iterator_type & operator--();                                                   // retreat the iterator one node (pre -decrement)
       Iterator_type   operator--( int );                                              // retreat the iterator one node (post-decrement)
@@ -497,11 +495,11 @@ namespace CSUF::CPSC131
   std::weak_ordering DoublyLinkedList<T>::operator<=>( DoublyLinkedList const & rhs ) const
   {
     std::size_t i      = 0;
-    std::size_t extent = size() < rhs.size()  ?  size()  :  rhs.size();   // min(size, rhs.size)
+    std::size_t extent = size() < rhs.size()  ?  size()  :  rhs.size();               // min(size, rhs.size)
 
     for( auto p = begin(), q = rhs.begin();   i < extent;   ++i, ++p, ++q )
     {
-      auto result = std::compare_weak_order_fallback( *p, *q );           // uses operator== and operator< if operator<=> is unavailable
+      auto result = std::compare_weak_order_fallback( *p, *q );                       // uses operator== and operator< if operator<=> is unavailable
       if( result != 0 ) return result;
     }
     return size() <=> rhs.size();
@@ -544,8 +542,8 @@ namespace CSUF::CPSC131
   template<typename T>
   void swap( DoublyLinkedList<T> & lhs, DoublyLinkedList<T> & rhs )
   {
-    using std::swap;               // Let argument dependent lookup (ADL) find the right swap function
-    swap( lhs.self, rhs.self );    // and avoid a explicit call to std::swap()
+    using std::swap;                                                                  // Let argument dependent lookup (ADL) find the right swap function
+    swap( lhs.self, rhs.self );                                                       // and avoid a explicit call to std::swap()
   }
 
 
@@ -565,10 +563,10 @@ namespace CSUF::CPSC131
   **
   *********************************************************************************************************************************/
 
-  // Copy constructor when T2 is non-const iterator, Conversion constructor from non-const to const iterator when T2 is a const iterator
+  // Copy constructor when U is non-const iterator, Conversion constructor from non-const to const iterator when U is a const iterator
   // Type of parameter is intentionally a non-constant iterator
-  template<typename T1>   template<typename T2>
-  DoublyLinkedList<T1>::Iterator_type<T2>::Iterator_type( iterator const & other )    // Notice the parameter type is "iterator", not "Iterator_type"
+  template<typename T>   template<typename U>
+  DoublyLinkedList<T>::Iterator_type<U>::Iterator_type( iterator const & other )      // Notice the parameter type is "iterator", not "Iterator_type"
     : _nodePtr{ other._nodePtr }
   {}
 
@@ -576,8 +574,8 @@ namespace CSUF::CPSC131
 
 
   // Conversion Constructor from pointer-to-Node to iterator
-  template<typename T1>   template<typename T2>
-  DoublyLinkedList<T1>::Iterator_type<T2>::Iterator_type( Node * p )
+  template<typename T>   template<typename U>
+  DoublyLinkedList<T>::Iterator_type<U>::Iterator_type( Node * p )
     : _nodePtr{ p }
   {}
 
@@ -585,8 +583,8 @@ namespace CSUF::CPSC131
 
 
   // operator++   pre-increment
-  template<typename T1>   template<typename T2>
-  typename DoublyLinkedList<T1>::template Iterator_type<T2> &   DoublyLinkedList<T1>::Iterator_type<T2>::operator++()
+  template<typename T>   template<typename U>
+  typename DoublyLinkedList<T>::template Iterator_type<U> &   DoublyLinkedList<T>::Iterator_type<U>::operator++()
   {
     if( _nodePtr == nullptr )   throw std::invalid_argument( "Attempt to increment null iterator.  Cannot increment end() for a null-terminated list" );
 
@@ -598,8 +596,8 @@ namespace CSUF::CPSC131
 
 
   // operator++   post-increment
-  template<typename T1>   template<typename T2>
-  typename DoublyLinkedList<T1>::template Iterator_type<T2>   DoublyLinkedList<T1>::Iterator_type<T2>::operator++( int )
+  template<typename T>   template<typename U>
+  typename DoublyLinkedList<T>::template Iterator_type<U>   DoublyLinkedList<T>::Iterator_type<U>::operator++( int )
   {
     auto temp{ *this };
     operator++();                                                                     // Delegate to pre-increment leveraging error checking
@@ -610,8 +608,8 @@ namespace CSUF::CPSC131
 
 
   // operator--   pre-decrement
-  template<typename T1>   template<typename T2>
-  typename DoublyLinkedList<T1>::template Iterator_type<T2> &   DoublyLinkedList<T1>::Iterator_type<T2>::operator--()
+  template<typename T>   template<typename U>
+  typename DoublyLinkedList<T>::template Iterator_type<U> &   DoublyLinkedList<T>::Iterator_type<U>::operator--()
   {
     if( _nodePtr == nullptr )   throw std::invalid_argument( "Attempt to decrement null iterator.  Cannot decrement end() for a null-terminated list" );
 
@@ -623,8 +621,8 @@ namespace CSUF::CPSC131
 
 
   // operator--   post-decrement
-  template<typename T1>   template<typename T2>
-  typename DoublyLinkedList<T1>::template Iterator_type<T2>    DoublyLinkedList<T1>::Iterator_type<T2>::operator--( int )
+  template<typename T>   template<typename U>
+  typename DoublyLinkedList<T>::template Iterator_type<U>    DoublyLinkedList<T>::Iterator_type<U>::operator--( int )
   {
     auto temp( *this );
     operator--();                                                                     // Delegate to pre-decrement leveraging error checking
@@ -635,8 +633,8 @@ namespace CSUF::CPSC131
 
 
   // operator*
-  template<typename T1>   template<typename T2>
-  typename DoublyLinkedList<T1>::template Iterator_type<T2>::reference   DoublyLinkedList<T1>::Iterator_type<T2>::operator*() const
+  template<typename T>   template<typename U>
+  typename DoublyLinkedList<T>::template Iterator_type<U>::reference   DoublyLinkedList<T>::Iterator_type<U>::operator*() const
   {
     if( _nodePtr == nullptr )   throw std::invalid_argument( "Attempt to dereference null iterator" );
 
@@ -647,8 +645,8 @@ namespace CSUF::CPSC131
 
 
   // operator->
-  template<typename T1>   template<typename T2>
-  typename DoublyLinkedList<T1>::template Iterator_type<T2>::pointer   DoublyLinkedList<T1>::Iterator_type<T2>::operator->() const
+  template<typename T>   template<typename U>
+  typename DoublyLinkedList<T>::template Iterator_type<U>::pointer   DoublyLinkedList<T>::Iterator_type<U>::operator->() const
   {
     if( _nodePtr == nullptr )  throw std::invalid_argument( "Attempt to dereference null iterator" );
 
@@ -659,8 +657,8 @@ namespace CSUF::CPSC131
 
 
   // operator==
-  template<typename T1>   template<typename T2>
-  bool DoublyLinkedList<T1>::Iterator_type<T2>::operator==( Iterator_type const & rhs ) const
+  template<typename T>   template<typename U>
+  bool DoublyLinkedList<T>::Iterator_type<U>::operator==( Iterator_type const & rhs ) const
   { return _nodePtr == rhs._nodePtr; }
 }    // namespace CSUF::CPSC131
 

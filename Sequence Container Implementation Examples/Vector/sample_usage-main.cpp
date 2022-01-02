@@ -9,7 +9,6 @@
 
 
 
-
 namespace    // anonymous
 {
   using ::CSUF::CPSC131::Student;
@@ -54,7 +53,7 @@ namespace    // anonymous
 
 
     // remove student Adam (element at index 3)
-    vector.erase( vector.begin()+3 );       
+    vector.erase( vector.begin()+3 );
 
     // Should be:  "", "", "", Bob, Carla, Dolores
     std::cout << "\n ";
@@ -106,6 +105,9 @@ namespace    // anonymous
 
 
 
+
+
+
 int main()
 {
   try
@@ -137,7 +139,7 @@ int main()
   {
     std::cerr << "Unhandled exception:  " << ex.what() << '\n';
   }
-  
+
   return 0;
 }
 

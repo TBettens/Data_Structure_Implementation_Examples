@@ -16,7 +16,6 @@
 #include <iostream>
 #include <iterator>                                                                   // next(), bidirectional_iterator_tag
 #include <stdexcept>                                                                  // out_of_range, length_error
-#include <type_traits>                                                                // conditional_t, is_const_v
 #include <utility>                                                                    // pair, move()
 
 
@@ -40,15 +39,15 @@ namespace CSUF::CPSC131
 
     private:
       // Types
-      template <typename T> class  Iterator_type;                                     // Template class for iterator and const_iterator classes
+      template <typename U> class  Iterator_type;                                     // Template class for iterator and const_iterator classes
 
 
 
     public:
       // Types
-      using KeyValue_Pair  = std::pair     <Key const, Value   >;                      // An alias to the type of data held in the tree
-      using iterator       = Iterator_type <KeyValue_Pair      >;                      // A bi-directional iterator to a read-write value in the tree
-      using const_iterator = Iterator_type <KeyValue_Pair const>;                      // A bi-directional iterator to a read-only value in the tree
+      using KeyValue_Pair  = std::pair     <Key const, Value   >;                     // An alias to the type of data held in the tree
+      using iterator       = Iterator_type <KeyValue_Pair      >;                     // A bi-directional iterator to a read-write value in the tree
+      using const_iterator = Iterator_type <KeyValue_Pair const>;                     // A bi-directional iterator to a read-only value in the tree
 
 
       // Constructors, destructor, and assignments
@@ -153,7 +152,7 @@ namespace CSUF::CPSC131
   ** Class BinarySearchTree<Key, Value>::Iterator - A bi-directional iterator
   **
  *******************************************************************************/
-  template<typename Key, typename Value>  template<typename T>
+  template<typename Key, typename Value>  template<typename U>
   class BinarySearchTree<Key, Value>::Iterator_type
   {
     friend class BinarySearchTree<Key, Value>;
@@ -161,18 +160,17 @@ namespace CSUF::CPSC131
     public:
       // Iterator Type Traits - Boilerplate stuff so the iterator can be used with the rest of the standard library
       using iterator_category = std::bidirectional_iterator_tag;
-      using value_type        = T;
+      using value_type        = U;
       using difference_type   = std::ptrdiff_t;
-      using pointer           = std::conditional_t< std::is_const_v<T>, T const *, T *>;
-      using reference         = std::conditional_t< std::is_const_v<T>, T const &, T &>;
+      using pointer           = value_type *;
+      using reference         = value_type &;
 
 
       // Compiler synthesized constructors and destructor are fine, just what we want (shallow copies, no ownership) but needed to
       // explicitly say that because there is also a user defined constructor
-      Iterator_type            (                             ) = delete;              // Default constructed Iterator_type not allowed - should create end(), if we knew what that was
-      Iterator_type            ( iterator      const & other );                       // Copy constructor when T is non-const, Conversion constructor from non-const to const iterator when T is const
-      Iterator_type & operator=( Iterator_type const &       ) = default;             // Explicitly default the copy assignment operator to go with the explicitly defined copy constructor
-
+      Iterator_type(                        ) = delete;                               // Default constructed Iterator_type not allowed - should create end(), if we knew what that was
+      Iterator_type( iterator const & other );                                        // Copy constructor when U is non-const, Conversion constructor from non-const to const iterator when U is const
+                                                                                      // Note parameter type is intentionally "iterator", not "Iterator_type"
       // Pre and post Increment operators move the position to the next node in the list
       Iterator_type & operator++();                                                   // advance the iterator one node in-order (pre -increment)
       Iterator_type   operator++( int );                                              // advance the iterator one node in-order (post-increment)
@@ -195,7 +193,7 @@ namespace CSUF::CPSC131
 
       // Helper functions
       Iterator_type( Node * position );                                               // Implicit conversion constructor from pointer-to-Node to iterator-to-Node
-  };  // BinarySearchTree<T>::Iterator_type
+  };  // BinarySearchTree<U>::Iterator_type
 
 }    // namespace CSUF::CPSC131
 
@@ -1090,10 +1088,10 @@ namespace CSUF::CPSC131
   **
   *********************************************************************************************************************************/
 
-  // Copy constructor when T is non-const iterator, Conversion constructor from non-const to const iterator when T is a const
+  // Copy constructor when U is non-const iterator, Conversion constructor from non-const to const iterator when U is a const
   // iterator Type of parameter is intentionally a non-constant iterator
-  template<typename Key, typename Value>  template<typename T>
-  BinarySearchTree<Key, Value>::Iterator_type<T>::Iterator_type( iterator const & other )     // Notice the parameter type is "iterator", not "Iterator_type"
+  template<typename Key, typename Value>  template<typename U>
+  BinarySearchTree<Key, Value>::Iterator_type<U>::Iterator_type( iterator const & other )     // Notice the parameter type is "iterator", not "Iterator_type"
     : _nodePtr{ other._nodePtr }
   {}
 
@@ -1101,8 +1099,8 @@ namespace CSUF::CPSC131
 
 
   // Conversion constructor
-  template<typename Key, typename Value>  template<typename T>
-  BinarySearchTree<Key, Value>::Iterator_type<T>::Iterator_type( Node * p )
+  template<typename Key, typename Value>  template<typename U>
+  BinarySearchTree<Key, Value>::Iterator_type<U>::Iterator_type( Node * p )
     : _nodePtr( p )
   {}
 
@@ -1110,8 +1108,8 @@ namespace CSUF::CPSC131
 
 
   // operator++ (pre-increment)
-  template<typename Key, typename Value>  template<typename T>
-  typename BinarySearchTree<Key, Value>::template Iterator_type<T> & BinarySearchTree<Key, Value>::Iterator_type<T>::operator++()    // pre-increment
+  template<typename Key, typename Value>  template<typename U>
+  typename BinarySearchTree<Key, Value>::template Iterator_type<U> & BinarySearchTree<Key, Value>::Iterator_type<U>::operator++()    // pre-increment
   {
     if( _nodePtr == nullptr ) return *this;
 
@@ -1137,8 +1135,8 @@ namespace CSUF::CPSC131
 
 
   // operator++   (post-increment)
-  template<typename Key, typename Value>  template<typename T>
-  typename BinarySearchTree<Key, Value>::template Iterator_type<T> BinarySearchTree<Key, Value>::Iterator_type<T>::operator++( int )    // post-increment
+  template<typename Key, typename Value>  template<typename U>
+  typename BinarySearchTree<Key, Value>::template Iterator_type<U> BinarySearchTree<Key, Value>::Iterator_type<U>::operator++( int )    // post-increment
   {
     auto temp{ *this };                                                               // make a copy of the original iterator
     operator++();                                                                     // Delegate to pre-increment leveraging error checking
@@ -1149,8 +1147,8 @@ namespace CSUF::CPSC131
 
 
   // operator--  (pre-decrement)
-  template<typename Key, typename Value>  template<typename T>
-  typename BinarySearchTree<Key, Value>::template Iterator_type<T> & BinarySearchTree<Key, Value>::Iterator_type<T>::operator--()    // pre-decrement
+  template<typename Key, typename Value>  template<typename U>
+  typename BinarySearchTree<Key, Value>::template Iterator_type<U> & BinarySearchTree<Key, Value>::Iterator_type<U>::operator--()    // pre-decrement
   {
     if( _nodePtr == nullptr ) return *this;
 
@@ -1176,8 +1174,8 @@ namespace CSUF::CPSC131
 
 
   // operator--  (post-decrement)
-  template<typename Key, typename Value>  template<typename T>
-  typename BinarySearchTree<Key, Value>::template Iterator_type<T> BinarySearchTree<Key, Value>::Iterator_type<T>::operator--( int )    // post-decrement
+  template<typename Key, typename Value>  template<typename U>
+  typename BinarySearchTree<Key, Value>::template Iterator_type<U> BinarySearchTree<Key, Value>::Iterator_type<U>::operator--( int )    // post-decrement
   {
     auto temp{ *this };                                                               // make a copy of the original iterator
     operator--();                                                                     // Delegate to pre-decrement leveraging error checking
@@ -1188,24 +1186,24 @@ namespace CSUF::CPSC131
 
 
   // operator*
-  template<typename Key, typename Value>  template<typename T>
-  typename BinarySearchTree<Key, Value>::template Iterator_type<T>::reference  BinarySearchTree<Key, Value>::Iterator_type<T>::operator*() const
+  template<typename Key, typename Value>  template<typename U>
+  typename BinarySearchTree<Key, Value>::template Iterator_type<U>::reference  BinarySearchTree<Key, Value>::Iterator_type<U>::operator*() const
   { return _nodePtr->_pair; }
 
 
 
 
   // operator->
-  template<typename Key, typename Value>  template<typename T>
-  typename BinarySearchTree<Key, Value>::template Iterator_type<T>::pointer  BinarySearchTree<Key, Value>::Iterator_type<T>::operator->() const
+  template<typename Key, typename Value>  template<typename U>
+  typename BinarySearchTree<Key, Value>::template Iterator_type<U>::pointer  BinarySearchTree<Key, Value>::Iterator_type<U>::operator->() const
   { return &( _nodePtr->_pair ); }
 
 
 
 
   // operator==
-  template<typename Key, typename Value>  template<typename T>
-  bool BinarySearchTree<Key, Value>::Iterator_type<T>::operator==( const Iterator_type & rhs ) const
+  template<typename Key, typename Value>  template<typename U>
+  bool BinarySearchTree<Key, Value>::Iterator_type<U>::operator==( const Iterator_type & rhs ) const
   { return _nodePtr == rhs._nodePtr; }
 
 

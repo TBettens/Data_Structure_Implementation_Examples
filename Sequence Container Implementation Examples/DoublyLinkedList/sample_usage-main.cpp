@@ -8,12 +8,6 @@
 
 
 
-
-
-
-
-
-
 int main()
 {
   try

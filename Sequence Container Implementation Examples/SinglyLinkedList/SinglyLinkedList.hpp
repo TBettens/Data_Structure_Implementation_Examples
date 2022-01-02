@@ -14,7 +14,6 @@
 #include <cstddef>                                                                    // size_t
 #include <memory>                                                                     // unique_ptr, make_unique()
 #include <stdexcept>                                                                  // length_error, invalid_argument
-#include <type_traits>                                                                // conditional_t, is_const_v
 #include <utility>                                                                    // swap(), move()
 
 
@@ -32,7 +31,7 @@ namespace CSUF::CPSC131
 
     private:
       // Types
-      template <typename T2> class  Iterator_type;                                    // Template class for iterator and const_iterator classes
+      template <typename U>  class Iterator_type;                                     // Template class for iterator and const_iterator classes
       struct Node;                                                                    // Specific implementations are responsible for defining their node structure
       struct PrivateMembers;                                                          // A specific implementation's private members (attributes, functions, etc)
 
@@ -162,26 +161,24 @@ namespace CSUF::CPSC131
   ** Class SinglyLinkedList<T>::iterator - A singly linked list forward iterator
   **
   *********************************************************************************************************************************/
-  template<typename T1>   template<typename T2>
-  class SinglyLinkedList<T1>::Iterator_type
+  template<typename T>   template<typename U>
+  class SinglyLinkedList<T>::Iterator_type
   {
-    friend class SinglyLinkedList<T1>;
+    friend class SinglyLinkedList<T>;
 
     public:
       // Iterator Type Traits - Boilerplate stuff so the iterator can be used with the rest of the standard library
       using iterator_category = std::forward_iterator_tag;
-      using value_type        = T2;
+      using value_type        = U;                                                    // U is expected to be either T or T const
       using difference_type   = std::ptrdiff_t;
-      using pointer           = std::conditional_t< std::is_const_v<T2>, T2 const *, T2 *>;
-      using reference         = std::conditional_t< std::is_const_v<T2>, T2 const &, T2 &>;
+      using pointer           = value_type *;
+      using reference         = value_type &;
 
 
-      // Compiler synthesized constructors and destructor are fine, just what we want (shallow copies, no ownership) but needed to
-      // explicitly say that because there is also a user defined constructor
-      Iterator_type            (                             ) = delete;              // Default constructed Iterator_type not allowed - should create end(), if we knew what that was
-      Iterator_type            ( iterator      const & other );                       // Copy constructor when T is non-const, Conversion constructor from non-const to const iterator when T is const
-      Iterator_type & operator=( Iterator_type const &       ) = default;             // Explicitly default the copy assignment operator to go with the explicitly defined copy constructor
-
+      // Compiler synthesized constructors and destructor are fine, just what we want (shallow copies, no ownership)
+      Iterator_type(                        ) = delete;                               // Default constructed Iterator_type not allowed - should create end(), if we knew what that was
+      Iterator_type( iterator const & other );                                        // Copy constructor when T is non-const, Conversion constructor from non-const to const iterator when T is const
+                                                                                      // Note parameter type is intentionally "iterator", not "Iterator_type"
       // Pre and post Increment operators move the position to the next node in the list
       Iterator_type & operator++();                                                   // advance the iterator one node (pre -increment)
       Iterator_type   operator++( int );                                              // advance the iterator one node (post-increment)
@@ -235,7 +232,7 @@ namespace CSUF::CPSC131
   // Default constructor
   template<typename T>
   SinglyLinkedList<T>::SinglyLinkedList()
-    : self( std::make_unique<PrivateMembers>() )                              // construct the list's private members
+    : self( std::make_unique<PrivateMembers>() )                                      // construct the list's private members
   {}
 
 
@@ -244,7 +241,7 @@ namespace CSUF::CPSC131
   // Copy construction
   template<typename T>
   SinglyLinkedList<T>::SinglyLinkedList( const SinglyLinkedList & original )
-    : SinglyLinkedList()                                                      // delegating constructor
+    : SinglyLinkedList()                                                              // delegating constructor
   {
     // This new list has already been constructed and initialized to be empty.  Now, walk the original list adding copies of the
     // elements to this (initially empty) list maintaining order (i.e,  perform a deep copy)
@@ -266,7 +263,7 @@ namespace CSUF::CPSC131
   // Initializer List construction
   template<typename T>
   SinglyLinkedList<T>::SinglyLinkedList( std::initializer_list<T> init_list )
-    : SinglyLinkedList()                                                      // delegating constructor
+    : SinglyLinkedList()                                                              // delegating constructor
   {
     // This new list has already been constructed and initialized to be empty.  Now, walk the initializer list adding copies of the
     // elements to this (initially empty) list maintaining order (i.e,  perform a deep copy)
@@ -289,16 +286,16 @@ namespace CSUF::CPSC131
         auto p = begin();
         auto q = rhs.begin();
 
-        while( p !=     end() )    *p++ = *q++;                               // Let's reuse as many nodes as possible
-        while( q != rhs.end() )    push_back( *q++ );                         // Add the remaining values in the rhs list to this list
+        while( p !=     end() )    *p++ = *q++;                                       // Let's reuse as many nodes as possible
+        while( q != rhs.end() )    push_back( *q++ );                                 // Add the remaining values in the rhs list to this list
       }
       else
       {
         auto p = before_begin();
         auto q = rhs.begin();
 
-        while( q != rhs.end()        )   *++p = *q++;                         // Let's reuse as many nodes as possible
-        while( std::next(p) != end() )   erase_after(p);                      // truncate this list's leftovers (erase_after(p) changes p's next node)
+        while( q != rhs.end()        )   *++p = *q++;                                 // Let's reuse as many nodes as possible
+        while( std::next(p) != end() )   erase_after(p);                              // truncate this list's leftovers (erase_after(p) changes p's next node)
       }
     }
     return *this;
@@ -594,11 +591,11 @@ namespace CSUF::CPSC131
   std::weak_ordering SinglyLinkedList<T>::operator<=>( SinglyLinkedList const & rhs ) const
   {
     std::size_t i      = 0;
-    std::size_t extent = size() < rhs.size()  ?  size()  :  rhs.size();   // min(size, rhs.size)
+    std::size_t extent = size() < rhs.size()  ?  size()  :  rhs.size();               // min(size, rhs.size)
 
     for (auto p = begin(), q = rhs.begin();   i < extent;   ++i, ++p, ++q)
     {
-      auto result = std::compare_weak_order_fallback( *p, *q );           // uses operator== and operator< if operator<=> is unavailable
+      auto result = std::compare_weak_order_fallback( *p, *q );                       // uses operator== and operator< if operator<=> is unavailable
       if( result != 0 ) return result;
     }
     return size() <=> rhs.size();
@@ -638,8 +635,8 @@ namespace CSUF::CPSC131
   template<typename T>
   void swap( SinglyLinkedList<T> & lhs, SinglyLinkedList<T> & rhs )
   {
-    using std::swap;               // Let argument dependent lookup (ADL) find the right swap function
-    swap( lhs.self, rhs.self );    // and avoid a explicit call to std::swap()
+    using std::swap;                                                                  // Let argument dependent lookup (ADL) find the right swap function
+    swap( lhs.self, rhs.self );                                                       // and avoid a explicit call to std::swap()
   }
 
 
@@ -664,10 +661,10 @@ namespace CSUF::CPSC131
   **
   *********************************************************************************************************************************/
 
-  // Copy constructor when T2 is non-const iterator, Conversion constructor from non-const to const iterator when T2 is a const iterator
+  // Copy constructor when U is non-const iterator, Conversion constructor from non-const to const iterator when U is a const iterator
   // Type of parameter is intentionally a non-constant iterator
-  template<typename T1>   template<typename T2>
-  SinglyLinkedList<T1>::Iterator_type<T2>::Iterator_type( iterator const & other )     // Notice the parameter type is "iterator", not "Iterator_type"
+  template<typename T>   template<typename U>
+  SinglyLinkedList<T>::Iterator_type<U>::Iterator_type( iterator const & other )      // Notice the parameter type is "iterator", not "Iterator_type"
     : _nodePtr{ other._nodePtr }
   {}
 
@@ -675,8 +672,8 @@ namespace CSUF::CPSC131
 
 
   // Conversion Constructor from pointer-to-Node to iterator
-  template<typename T1>   template<typename T2>
-  SinglyLinkedList<T1>::Iterator_type<T2>::Iterator_type( Node * p )
+  template<typename T>   template<typename U>
+  SinglyLinkedList<T>::Iterator_type<U>::Iterator_type( Node * p )
     : _nodePtr{ p }
   {}
 
@@ -684,8 +681,8 @@ namespace CSUF::CPSC131
 
 
   // operator++   pre-increment
-  template<typename T1>   template<typename T2>
-  typename SinglyLinkedList<T1>::template Iterator_type<T2> &   SinglyLinkedList<T1>::Iterator_type<T2>::operator++()
+  template<typename T>   template<typename U>
+  typename SinglyLinkedList<T>::template Iterator_type<U> &   SinglyLinkedList<T>::Iterator_type<U>::operator++()
   {
     if( _nodePtr == nullptr )   throw std::invalid_argument( "Attempt to increment null iterator" );
 
@@ -697,11 +694,11 @@ namespace CSUF::CPSC131
 
 
   // operator++   post-increment
-  template<typename T1>   template<typename T2>
-  typename SinglyLinkedList<T1>::template Iterator_type<T2>   SinglyLinkedList<T1>::Iterator_type<T2>::operator++( int )
+  template<typename T>   template<typename U>
+  typename SinglyLinkedList<T>::template Iterator_type<U>   SinglyLinkedList<T>::Iterator_type<U>::operator++( int )
   {
     auto temp{ *this };
-    operator++();                                                             // Delegate to pre-increment leveraging error checking
+    operator++();                                                                     // Delegate to pre-increment leveraging error checking
     return temp;
   }
 
@@ -709,8 +706,8 @@ namespace CSUF::CPSC131
 
 
   // operator*
-  template<typename T1>   template<typename T2>
-  typename SinglyLinkedList<T1>::template Iterator_type<T2>::reference   SinglyLinkedList<T1>::Iterator_type<T2>::operator*() const
+  template<typename T>   template<typename U>
+  typename SinglyLinkedList<T>::template Iterator_type<U>::reference   SinglyLinkedList<T>::Iterator_type<U>::operator*() const
   {
     if( _nodePtr == nullptr )   throw std::invalid_argument( "Attempt to dereference null iterator" );
 
@@ -721,8 +718,8 @@ namespace CSUF::CPSC131
 
 
   // operator->
-  template<typename T1>   template<typename T2>
-  typename SinglyLinkedList<T1>::template Iterator_type<T2>::pointer   SinglyLinkedList<T1>::Iterator_type<T2>::operator->() const
+  template<typename T>   template<typename U>
+  typename SinglyLinkedList<T>::template Iterator_type<U>::pointer   SinglyLinkedList<T>::Iterator_type<U>::operator->() const
   {
     if( _nodePtr == nullptr )  throw std::invalid_argument( "Attempt to dereference null iterator" );
 
@@ -733,8 +730,8 @@ namespace CSUF::CPSC131
 
 
   // operator==
-  template<typename T1>   template<typename T2>
-  bool SinglyLinkedList<T1>::Iterator_type<T2>::operator==( Iterator_type const & rhs ) const
+  template<typename T>   template<typename U>
+  bool SinglyLinkedList<T>::Iterator_type<U>::operator==( Iterator_type const & rhs ) const
   { return _nodePtr == rhs._nodePtr; }
 
 
@@ -764,11 +761,11 @@ namespace CSUF::CPSC131
   template<typename T>
   void SinglyLinkedList<T>::reverse()
   {
-    auto & head = self->_head;                                                // an easier to read alias for the head of the list
-    auto & tail = self->_tail;                                                // an easier to read alias for the tail of the list
+    auto & head = self->_head;                                                        // an easier to read alias for the head of the list
+    auto & tail = self->_tail;                                                        // an easier to read alias for the tail of the list
 
-    reverse( head );                                                          // Kick off the recursion starting at the head. Note the call to overloaded, private reverse function
-    std::swap( head, tail );                                                  // Now swap the head and tail pointers
+    reverse( head );                                                                  // Kick off the recursion starting at the head. Note the call to overloaded, private reverse function
+    std::swap( head, tail );                                                          // Now swap the head and tail pointers
   }
 
 
@@ -798,7 +795,7 @@ namespace CSUF::CPSC131
   template<typename T>
   T SinglyLinkedList<T>::add() const
   {
-    return add( self->_head );                                                // Kick off the recursion starting at the head. Note the call to overloaded, private add function
+    return add( self->_head );                                                        // Kick off the recursion starting at the head. Note the call to overloaded, private add function
   }
 
 
@@ -828,7 +825,7 @@ namespace CSUF::CPSC131
   template<typename T>
   typename SinglyLinkedList<T>::iterator SinglyLinkedList<T>::find( const T & data )
   {
-    return find( self->_head, data );                                         // Kick off the recursion starting at the head. Note the call to the overloaded, private find function
+    return find( self->_head, data );                                                 // Kick off the recursion starting at the head. Note the call to the overloaded, private find function
   }
 
 
@@ -857,7 +854,7 @@ namespace CSUF::CPSC131
   template<typename T>
   void SinglyLinkedList<T>::forwardPrint() const
   {
-    forwardPrint( self->_head );                                              // Kick off the recursion starting at the head. Note the call to the overloaded, private forwardPrint function
+    forwardPrint( self->_head );                                                      // Kick off the recursion starting at the head. Note the call to the overloaded, private forwardPrint function
   }
 
 
@@ -887,7 +884,7 @@ namespace CSUF::CPSC131
   template<typename T>
   void SinglyLinkedList<T>::backwardPrint() const
   {
-    backwardPrint( self->_head );                                             // Kick off the recursion starting at the head. Note the call to the overloaded, private backwardPrint function
+    backwardPrint( self->_head );                                                     // Kick off the recursion starting at the head. Note the call to the overloaded, private backwardPrint function
   }
 
 

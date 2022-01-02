@@ -17,7 +17,7 @@
         2. Null-Terminated
         3. Bi-Directional Iterators
         4. Deep vs Shallow copies (move semantics)
-3. **Container Adapters**
+2. **Container Adapters**
     1. Stack Implementation Examples
         1. Over Vector-like containers
         2. Over Array-like Containers
@@ -28,13 +28,13 @@
         2. Over Array-like Containers
         3. Over List-like containers
         4. Deep vs Shallow copies (move semantics)
-4. **Ordered Associative Containers**
+3. **Ordered Associative Containers**
     1. Binary Search Tree Implementation Examples
     2. AVL Tree Implementation Examples
         1. Bi-Directional Iterators
         4. Deep vs Shallow copies (move semantics)
         5. Recursion Examples via an Extended Interface 
-5. **Student**
+4. **Student**
     1. class Student is used as the kind of object to store in the above Data Structures 
         1. Copy and Move Constructors
         2. Copy and Move Assignment

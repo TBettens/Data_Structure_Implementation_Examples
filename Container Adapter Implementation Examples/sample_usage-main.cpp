@@ -17,10 +17,6 @@
 
 
 
-
-
-
-
 namespace
 {
   // A simple demonstration to highlight the interfaces, similarities, and differences between Stacks and Queues.  Because Stacks and
@@ -84,6 +80,7 @@ namespace
     std::cout << '\n';
   }
 }     // namespace
+
 
 
 

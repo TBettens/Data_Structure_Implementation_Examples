@@ -9,8 +9,6 @@
 
 
 
-
-
 namespace
 {
   unsigned          count = 0;

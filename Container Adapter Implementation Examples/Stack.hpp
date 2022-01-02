@@ -14,7 +14,7 @@
 #include <iterator>                                               // distance()
 #include <string>                                                 // to_string()
 
-#include "../Sequence Container Implementation Examples/Vector/Vector.hpp"
+#include "Vector.hpp"
 
 
 
