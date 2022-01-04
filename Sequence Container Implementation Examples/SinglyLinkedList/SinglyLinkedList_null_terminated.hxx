@@ -82,7 +82,7 @@ namespace CSUF::CPSC131
   /*******************************************************************************
   ** SinglyLinkedList<> Member Function Definitions
   *******************************************************************************/
-  
+
   // insert_after()
   template <typename T>
   typename SinglyLinkedList<T>::iterator SinglyLinkedList<T>::insert_after( const_iterator position, T const & data )
@@ -223,7 +223,7 @@ namespace CSUF::CPSC131
 
 
 /***********************************************************************************************************************************
-** (C) Copyright 2021 by Thomas Bettens. All Rights Reserved.
+** (C) Copyright 2022 by Thomas Bettens. All Rights Reserved.
 **
 ** DISCLAIMER: The participating authors at California State University's Computer Science Department have used their best efforts
 ** in preparing this code. These efforts include the development, research, and testing of the theories and programs to determine
@@ -235,8 +235,8 @@ namespace CSUF::CPSC131
 
 /**************************************************
 ** Last modified:  14-JUL-2021
-** Last Verified:  14-JUL-2021
-** Verified with:  MS Visual Studio 2019 Version 16.10.2 (C++20)
-**                 GCC version 11.1.1 20210625 (-std=c++20 ),
-**                 Clang version 12.0.0 (-std=c++20 -stdlib=libc++)
+** Last Verified:  03-JAN-2022
+** Verified with:  MS Visual Studio 2019 Version 16.11.8 (C++20)
+**                 GCC version 11.2.1 20211124 (-std=c++20 ),
+**                 Clang version 13.0.0 (-std=c++20 -stdlib=libc++)
 ***************************************************/
