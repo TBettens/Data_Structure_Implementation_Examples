@@ -12,6 +12,7 @@
 #pragma once
 #include <compare>                                                                    // week_ordering, strong_quality
 #include <cstddef>                                                                    // size_t
+#include <initializer_list>                                                           // initializer_list
 #include <memory>                                                                     // unique_ptr, make_unique<>()
 #include <stdexcept>                                                                  // length_error
 #include <utility>                                                                    // swap(), move()

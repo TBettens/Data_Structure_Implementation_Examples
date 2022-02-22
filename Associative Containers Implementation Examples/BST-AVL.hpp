@@ -13,6 +13,7 @@
 #include <cmath>                                                                      // abs()
 #include <compare>                                                                    // week_ordering, strong_quality
 #include <cstddef>                                                                    // size_t, ptrdiff_t
+#include <initializer_list>                                                           // initializer_list
 #include <iostream>
 #include <iterator>                                                                   // next(), bidirectional_iterator_tag
 #include <stdexcept>                                                                  // out_of_range, length_error
@@ -51,13 +52,14 @@ namespace CSUF::CPSC131
 
 
       // Constructors, destructor, and assignments
-      BinarySearchTree            (                                    );             // Default constructor, creates an empty tree
-      BinarySearchTree            ( BinarySearchTree const  & original );             // Copy constructor, performs a deep copy
-      BinarySearchTree            ( BinarySearchTree       && original ) noexcept;    // Move constructor, takes ownership of the other tree
-      BinarySearchTree & operator=( BinarySearchTree const  & rhs      );             // Copy assignment, performs a deep copy
-      BinarySearchTree & operator=( BinarySearchTree       && rhs      ) noexcept;    // Move assignment, takes ownership of the other tree
-     ~BinarySearchTree            (                                    ) noexcept;    // Destructor, performs a deep Key-Value pair destruction
+      BinarySearchTree(                                                   );          // Default constructor, creates an empty tree
+      BinarySearchTree( BinarySearchTree const                & original  );          // Copy constructor, performs a deep copy
+      BinarySearchTree( BinarySearchTree                     && original  ) noexcept; // Move constructor, takes ownership of the other tree
+      BinarySearchTree( std::initializer_list<KeyValue_Pair>    init_list );          // initialization list constructor
+     ~BinarySearchTree(                                                   ) noexcept; // Destructor, performs a deep Key-Value pair destruction
 
+      BinarySearchTree & operator=( BinarySearchTree const  & rhs );                  // Copy assignment, performs a deep copy
+      BinarySearchTree & operator=( BinarySearchTree       && rhs ) noexcept;         // Move assignment, takes ownership of the other tree
 
       // Queries
       std::size_t size    (                 ) const noexcept;                         // Returns the number of elements in the tree
@@ -334,16 +336,35 @@ namespace CSUF::CPSC131
 
 
 
+  // Initialization list constructor
+  template<typename Key, typename Value>
+  BinarySearchTree<Key, Value>::BinarySearchTree( std::initializer_list<KeyValue_Pair> init_list )
+    : BinarySearchTree()                                                       // delegate construction of an empty tree
+  {
+    for( auto && keyValue : init_list ) insert( keyValue );
+  }
+
+
+
+
+  // Destructor
+  template<typename Key, typename Value>
+  BinarySearchTree<Key, Value>::~BinarySearchTree() noexcept
+  { clear(); }
+
+
+
+
   // Copy assignment
   template<typename Key, typename Value>
   BinarySearchTree<Key, Value> & BinarySearchTree<Key, Value>::operator=( BinarySearchTree const & rhs )
   {
-    if( this != &rhs )                                                                // self assignment guard
+    if( this != &rhs )    // self assignment guard
     {
       // to ensure consistent behavior and to implement the logic in one place, delegate to the copy constructor and then the move
       // assignment operator
-      *this = BinarySearchTree{ rhs };                                                // Don't break this into two statements, or you may lose
-    }                                                                                 // the rvalue and get into an infinite recursive loop
+      *this = BinarySearchTree{ rhs };    // Don't break this into two statements, or you may lose
+    }                                     // the rvalue and get into an infinite recursive loop
 
     return *this;
   }
@@ -355,25 +376,17 @@ namespace CSUF::CPSC131
   template<typename Key, typename Value>
   BinarySearchTree<Key, Value> & BinarySearchTree<Key, Value>::operator=( BinarySearchTree && rhs ) noexcept
   {
-    if( this != &rhs )                                                                // self assignment guard
+    if( this != &rhs )    // self assignment guard
     {
       clear();
-      _root = rhs._root;                                                              // perform a shallow copy (takes ownership of the original tree)
-      _size = rhs._size;
+      _root     = rhs._root;    // perform a shallow copy (takes ownership of the original tree)
+      _size     = rhs._size;
 
-      rhs._root = nullptr;                                                            // set the original to an empty tree
+      rhs._root = nullptr;    // set the original to an empty tree
       rhs._size = 0;
     }
     return *this;
   }
-
-
-
-
-  // Destructor
-  template<typename Key, typename Value>
-  BinarySearchTree<Key, Value>::~BinarySearchTree() noexcept
-  { clear(); }
 
 
 
@@ -592,10 +605,10 @@ namespace CSUF::CPSC131
     }
 
     // Insert the new node in place (i.e., as the root node, or the left or right child node)
-    *child            = new Node( pair );                                             // Construction of node initializes all its pointers to null
-    (*child)->_parent = parent;                                                       // let the child know who's its daddy
-    ++_size;
-
+    Node * newNode   = new Node( pair );                                              // construction of node initializes all its pointers to null (programming note: smart pointer opportunity here)
+    newNode->_parent = parent;                                                        // let the child know who's its daddy
+    *child           = newNode;                                                       // link the new node into the tree
+    ++_size;                                                                          // and of course increment the tree's size
 
     /************** AVL Tree Unique ************************************************************************************************
     ** Self balancing BSTs, like this AVL tree, balances the left and right subtrees as part of insertion.  Work your way from the
@@ -611,7 +624,7 @@ namespace CSUF::CPSC131
 
 
     // return the added node and indicate something was added to the tree
-    return { *child, true };
+    return { newNode, true };
   }
 
 
@@ -643,7 +656,7 @@ namespace CSUF::CPSC131
 
     Node *   position_ptr   = position._nodePtr;                                      // Convert the iterator to a pointer-to-Node for convenience
 
-    if( position_ptr->_left && position_ptr->_right )                                 // two children
+    if( position_ptr->_left && position_ptr->_right )                                 // two children (programming note: a non-null pointer is "true")
     {
       Node * succ_ptr = successor( position_ptr );
       // Copy {key, value} pair from succ_ptr to position_ptr
@@ -659,14 +672,14 @@ namespace CSUF::CPSC131
 
     else                                                                              // zero or one child
     {
-      Node ** parent = position_ptr->_parent        == nullptr      ? &_root          // "parent" is a pointer-to-pointer-to-Node; tells us what pointer to update
+      Node ** parent = position_ptr->_parent        == nullptr      ? & _root         // "parent" is a pointer-to-pointer-to-Node; tells us what pointer to update
                    :   position_ptr->_parent->_left == position_ptr ? & position_ptr->_parent->_left
                    :                                                  & position_ptr->_parent->_right;
 
       Node * child = position_ptr->_left  ?  position_ptr->_left  :  position_ptr->_right;
 
-      *parent = child;
-      if( child ) child->_parent = position_ptr->_parent;
+      *parent = child;                                                                // remove me from the tree by making my parent point to my child
+      if( child ) child->_parent = position_ptr->_parent;                             // and my child point to my parent
 
 
       /************** AVL Tree Unique **********************************************************************************************
@@ -677,14 +690,14 @@ namespace CSUF::CPSC131
         for( auto current = position_ptr->_parent; current != nullptr; current = current->_parent )
         {
           updateHeight( current );
-          if( !isBalanced( current ) )   current = reBalance( current );              // By definition, at most one rebalance (rotation) will be required, so we could stop here ...
+          if( !isBalanced( current ) )   current = reBalance( current );              // there may be more than one rebalance necessary, so walk all the way to the root
         }
       /************** End AVL Tree Unique ******************************************************************************************/
 
       iterator temp = std::next( position )._nodePtr;                                 // converts const_iterator to iterator
       delete position_ptr;
       --_size;
-      return temp;
+      return temp;                                                                    // return the node after the one removed
     }
   }
 
