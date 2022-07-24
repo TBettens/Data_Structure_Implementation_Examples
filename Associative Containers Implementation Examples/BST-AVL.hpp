@@ -4,9 +4,8 @@
 **  The ADT's interface is a small subset of std::map defined at https://en.cppreference.com/w/cpp/container/map The tree does not
 **  contain duplicate keys
 **
-**  Two major differences between this example and std::map. Unlike std:map:
-**  1)  this example does not maintain a balanced BST
-**  2)  end() and rend() cannot be decremented
+**  Major differences between this example and std::map. Unlike std:map:
+**  1)  end() and rend() cannot be decremented
 ***********************************************************************************************************************************/
 #pragma once
 #include <algorithm>                                                                  // max(), swap()
@@ -600,7 +599,7 @@ namespace CSUF::CPSC131
       if( comp == 0 ) return { current, false };                                      // duplicate key found;  return the node found and indicate nothing was added to the tree
 
       parent = current;                                                               // remember who my daddy is
-      if( comp  < 0 ) child = &current->_left,  current = current->_left ;            // if key to insert is less that the current key, go left
+      if( comp  < 0 ) child = &current->_left,  current = current->_left ;            // if key to insert is less than the current key, go left
       else            child = &current->_right, current = current->_right;            // otherwise, go right
     }
 
