@@ -67,7 +67,7 @@ namespace
     myContainer.push( {"Katelyn"} );
 
 
-    // Display the contents.  Stacks and queues do not allow traversal (you can't see anything but the top (stack and queue) and both
+    // Display the contents.  Stacks and queues do not allow traversal (you can't see anything but the top (stack) or the front and back
     // (queue only), so to display the contents we have to inspect each element at the top and then remove it until the container is
     // empty.
     while( !myContainer.empty() )

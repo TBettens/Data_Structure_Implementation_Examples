@@ -77,7 +77,7 @@ namespace CSUF::CPSC131
   template<typename T>
   struct SinglyLinkedList<T>::PrivateMembers
   {
-    Node        _sentinel;                                                    // dummy node.  The first node of the list (_head) is at _sentinel->next;
+    Node        _sentinel;                                                    // dummy node.  The first node of the list (_head) is at *(_sentine._next);
     Node *&     _head = _sentinel._next;                                      // _head is just another name for _sentinel._next.  The head of the list is always at this location
     Node *      _tail = &_sentinel;                                           // last element in the list.  tail->next always points to _sentinel
     std::size_t _size = 0;                                                    // number of elements in the collection

@@ -83,7 +83,7 @@ namespace CSUF::CPSC131
   template<typename T>
   struct DoublyLinkedList<T>::PrivateMembers                                    // A specific implementation's private members (attributes, functions, etc)
   {
-    Node        _sentinel;                                                      // dummy node.  The first node of the list (_head) is at _sentinel->next;
+    Node        _sentinel;                                                      // dummy node.  The first node of the list (_head) is at *(_sentinel->next)
     Node *&     _head = _sentinel._next;                                        // An easier to read alias for the list's head, which is a pointer-to-Node
     Node *&     _tail = _sentinel._prev;                                        // last element in the list.  tail->next always points to _sentinel
     std::size_t _size = 0;                                                      // number of elements in the collection
