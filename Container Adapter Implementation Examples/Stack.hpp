@@ -121,7 +121,10 @@ namespace CSUF::CPSC131
       // Since the "array" structure has, by definition, fixed size and capacity, it's not possible to delegate all the object
       // management responsibilities as was done above. An attribute has been added to maintain the number of elements the client
       // has placed the stack.
-      std::size_t             _size  = 0;                         // number of elements in the stack, 0 indicates an empty container
+      std::size_t             _size = 0;                          // The number of elements in the stack, 0 indicates an empty container
+      std::size_t &           _top  = _size;                      // There is just one attribute, call it size or top.  It's the same thing.
+                                                                  // There is nothing in the slot indexed by Size/Top, so don't use it to retrieve data
+                                                                  // Size/Top represents the next slot in the array to fill
       std::array<T, CAPACITY> _collection;
   };
 }  // namespace CSUF::CPSC131
@@ -300,7 +303,7 @@ namespace CSUF::CPSC131
     //   | data | data | data | data |      |      |
     //   +------+------+------+------+------+------+
     //                                   ^
-    //                                 Size
+    //                               Size/Top
     //
     //
     //  After:  size = 5, capacity = 6
@@ -309,7 +312,7 @@ namespace CSUF::CPSC131
     //   | data | data | data | data | data |      |
     //   +------+------+------+------+------+------+
     //                                          ^
-    //                                        Size
+    //                                      Size/Top
     _collection[_size] = element;
     ++_size;
   }  // push()
@@ -334,7 +337,7 @@ namespace CSUF::CPSC131
     //   | data | data | data | data |      |      |
     //   +------+------+------+------+------+------+
     //                                   ^
-    //                                 Size
+    //                               Size/Top
     //
     //
     //  After:  size = 3, capacity = 6
@@ -343,7 +346,7 @@ namespace CSUF::CPSC131
     //   | data | data | data |      |      |      |
     //   +------+------+------+------+------+------+
     //                            ^
-    //                          Size
+    //                        Size/Top
     --_size;
     _collection[_size] = T{};     // We can't really destroy the element (array cells are always populated), but by setting the value to the default might release any resource held
   }
@@ -437,9 +440,9 @@ namespace CSUF::CPSC131
 ***********************************************************************************************************************************/
 
 /**************************************************
-** Last modified:  27-JUL-2021
-** Last Verified:  03-JAN-2022
-** Verified with:  MS Visual Studio 2019 Version 16.11.8 (C++20)
-**                 GCC version 11.2.1 20211124 (-std=c++20 ),
-**                 Clang version 13.0.0 (-std=c++20 -stdlib=libc++)
+** Last modified:  10-OCT-2022
+** Last Verified:  10-OCT-2022
+** Verified with:  MS Visual Studio 2019 Version 17.3.2 (C++22)
+**                 GCC version 12.2.1 20220830 (-std=c++20 ),
+**                 Clang version 14.0.6 (-std=c++20 -stdlib=libc++)
 ***************************************************/

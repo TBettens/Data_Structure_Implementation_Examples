@@ -170,7 +170,7 @@ namespace CSUF::CPSC131
       // Compiler synthesized constructors and destructor are fine, just what we want (shallow copies, no ownership) but needed to
       // explicitly say that because there is also a user defined constructor
       Iterator_type(                        ) = delete;                               // Default constructed Iterator_type not allowed - should create end(), if we knew what that was
-      Iterator_type( iterator const & other );                                        // Copy constructor when U is non-const, Conversion constructor from non-const to const iterator when U is const
+      Iterator_type( iterator const & other ) noexcept;                               // Copy constructor when U is non-const, Conversion constructor from non-const to const iterator when U is const
                                                                                       // Note parameter type is intentionally "iterator", not "Iterator_type"
       // Pre and post Increment operators move the position to the next node in the list
       Iterator_type & operator++();                                                   // advance the iterator one node in-order (pre -increment)
@@ -193,7 +193,7 @@ namespace CSUF::CPSC131
       Node * _nodePtr = nullptr;
 
       // Helper functions
-      Iterator_type( Node * position );                                               // Implicit conversion constructor from pointer-to-Node to iterator-to-Node
+      Iterator_type( Node * position ) noexcept;                                      // Implicit conversion constructor from pointer-to-Node to iterator-to-Node
   };  // BinarySearchTree<U>::Iterator_type
 
 }    // namespace CSUF::CPSC131
@@ -1103,7 +1103,7 @@ namespace CSUF::CPSC131
   // Copy constructor when U is non-const iterator, Conversion constructor from non-const to const iterator when U is a const
   // iterator Type of parameter is intentionally a non-constant iterator
   template<typename Key, typename Value>  template<typename U>
-  BinarySearchTree<Key, Value>::Iterator_type<U>::Iterator_type( iterator const & other )     // Notice the parameter type is "iterator", not "Iterator_type"
+  BinarySearchTree<Key, Value>::Iterator_type<U>::Iterator_type( iterator const & other ) noexcept    // Notice the parameter type is "iterator", not "Iterator_type"
     : _nodePtr{ other._nodePtr }
   {}
 
@@ -1112,7 +1112,7 @@ namespace CSUF::CPSC131
 
   // Conversion constructor
   template<typename Key, typename Value>  template<typename U>
-  BinarySearchTree<Key, Value>::Iterator_type<U>::Iterator_type( Node * p )
+  BinarySearchTree<Key, Value>::Iterator_type<U>::Iterator_type( Node * p ) noexcept
     : _nodePtr( p )
   {}
 
