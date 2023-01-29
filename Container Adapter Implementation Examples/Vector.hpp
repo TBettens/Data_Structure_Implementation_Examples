@@ -1,1 +1,0 @@
-../Sequence Container Implementation Examples/Vector/Vector.hpp
