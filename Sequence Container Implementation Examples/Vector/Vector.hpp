@@ -23,12 +23,12 @@
 ***********************************************************************************************************************************/
 #pragma once
 
-#include <algorithm>                                                      // swap(), move(), move_backward(), copy()
+#include <algorithm>                                                      // swap(), move(), move_backward(), shift_left(), shift_right(), copy(), copy_n(), min()
 #include <string>                                                         // string, to_string()
-#include <compare>                                                        // weak_ordering
+#include <compare>                                                        // weak_ordering, compare_weak_order_fallback()
 #include <cstddef>                                                        // size_t
 #include <initializer_list>                                               // initializer_list
-#include <memory>                                                         // unique_ptr, make_unique(), uninitialized_copy(), uninitialized_move(), uninitialized_move_n()uninitialized_value_construct_n(), construct_at()
+#include <memory>                                                         // unique_ptr, make_unique(), uninitialized_copy(), uninitialized_move(), uninitialized_move_n(), uninitialized_value_construct_n(), construct_at(), destroy()
 #include <stdexcept>                                                      // out_of_range, overflow_error, underflow_error
 #include <type_traits>                                                    // aligned_storage
 #include <utility>                                                        // move()
@@ -57,12 +57,19 @@ namespace CSUF::CPSC131
 
       // Constructors, destructor, and assignments
       Vector            ( std::size_t                size = 0,   std::size_t capacity = 0 );          // Default constructor  Capacity defaults to size
-      Vector            ( Vector const             & original                             );          // Copy constructor
-      Vector            ( Vector                  && original                             ) noexcept; // Move constructor
+      Vector            ( Vector const             & original                             );          // Copy constructor  (Same POLICY)
+      Vector            ( Vector                  && original                             ) noexcept; // Move constructor  (Same POLICY)
       Vector            ( std::initializer_list<T>   init_list                            );          // initialization list constructor
-      Vector & operator=( Vector const             & rhs                                  );          // Copy assignment
-      Vector & operator=( Vector                  && rhs                                  ) noexcept; // Move assignment
-     ~Vector            (                                                                 ) noexcept;
+      Vector & operator=( Vector const             & rhs                                  );          // Copy assignment   (Same POLICY)
+      Vector & operator=( Vector                  && rhs                                  ) noexcept; // Move assignment   (Same POLICY)
+
+      // Not implemented, for now ...
+      template<VectorPolicy P>          Vector   ( Vector<T, P> const  & original )          = delete;// Copy constructor  (Mixed POLICY)
+      template<VectorPolicy P>          Vector   ( Vector<T, P>       && original ) noexcept = delete;// Move constructor  (Mixed POLICY)
+      template<VectorPolicy P> Vector & operator=( Vector<T, P> const  & rhs      )          = delete;// Copy assignment   (Mixed POLICY)
+      template<VectorPolicy P> Vector & operator=( Vector<T, P>       && rhs      ) noexcept = delete;// Move assignment   (Mixed POLICY)
+
+     ~Vector() noexcept;
 
 
       // Queries
@@ -130,19 +137,19 @@ namespace CSUF::CPSC131
       // resources by constructing objects only when needed.  The exception is when T is a trivial type (e.g. a native type).  In
       // this case it's possible to optimize some operations and gain some efficiencies.  Function clear()'s efficiency class, for
       // example, could change from O(n) to O(1).  Such optimization can be sprinkled through the implementing code, which I've done.
-      //   std::unique_ptr< T[] > _array  = nullptr;                      // considered and discarded
+      //   std::unique_ptr< T[] > _array  = nullptr;                      // Considered and discarded
       //
-      using RawMemory = std::aligned_storage_t< sizeof(T), alignof(T) >;  // enough properly aligned uninitialized (raw) memory for one object of type T
+      using RawMemory = std::aligned_storage_t< sizeof(T), alignof(T) >;  // Enough properly aligned uninitialized (raw) memory for one object of type T
                                                                           // See  https://en.cppreference.com/w/cpp/types/aligned_storage
 
       // Attributes
       // Note:  Physical ordering of _size, _capacity, and _array is required for construction and must be maintained
-      std::size_t                   _size     = 0;                        // number of elements in the data structure
-      std::size_t                   _capacity = 0;                        // length of the array
-      std::unique_ptr<RawMemory[]>  _array    = nullptr;                  // smart pointer to dynamically allocated array
+      std::size_t                   _size     = 0;                        // Number of elements in the data structure
+      std::size_t                   _capacity = 0;                        // Length of the array
+      std::unique_ptr<RawMemory[]>  _array    = nullptr;                  // Smart pointer to dynamically allocated array
 
       // Helper functions
-      void reserve( size_t newCapacity );                                 // helper function to change capacity (expandable vector only)
+      void reserve( size_t newCapacity );                                 // Helper function to change capacity (extendable vector only)
   };
 }    // namespace CSUF::CPSC131
 
@@ -181,16 +188,16 @@ namespace CSUF::CPSC131
       _capacity{ size > capacity  ?  size  :  (POLICY == VectorPolicy::FIXED && capacity == 0  ? 64 : capacity) },    // Capacity can never be less than size, and a Fixed Capacity Vector can never be 0
       _array   { std::make_unique<RawMemory[]>( _capacity ) }             // Pre-allocate an array of raw memory
   {
-    std::uninitialized_value_construct_n( begin(), _size );               // construct _size new elements placing them in _array's pre-allocated memory
+    std::uninitialized_value_construct_n( begin(), _size );               // Default construct _size new elements placing them in _array's pre-allocated memory
   }                                                                       // See https://en.cppreference.com/w/cpp/memory/uninitialized_value_construct_n
 
 
 
-  // Copy construction
+  // Copy construction (Same POLICY)
   template <typename T, VectorPolicy POLICY>
   Vector<T, POLICY>::Vector( const Vector & original )
     : _size    { original._size },
-      _capacity{ POLICY == VectorPolicy::EXTENDABLE ? original._size : original._capacity },    // let extendable vectors shrink-to-fit
+      _capacity{ POLICY == VectorPolicy::EXTENDABLE ? original._size : original._capacity },    // Let extendable vectors shrink-to-fit
       _array   { std::make_unique<RawMemory[]>( _capacity ) }                                   // Pre-allocate an array of raw memory
   {
     std::uninitialized_copy( original.begin(), original.end(), begin() ); // Deep copy - copy elements from original placing them in _array's pre-allocated memory
@@ -199,16 +206,17 @@ namespace CSUF::CPSC131
 
 
 
-  // Move construction
+  // Move construction (Same POLICY)
   template <typename T, VectorPolicy POLICY>
   Vector<T, POLICY>::Vector( Vector && original ) noexcept
-    : _size    { original._size               },                          // steal the resources from original
+    : _size    { original._size               },                          // Steal the resources from original
       _capacity{ original._capacity           },
-      _array   { std::move( original._array ) }                           // Shallow copy - move the pointer, not what the pointer points to.
+      _array   { std::move( original._array ) }                           // Shallow copy - move the pointer, not what the pointer points to
   {
-    original._size = original._capacity = 0;                              // leave original in a valid state (original._array has already been set to nullptr)
+    original._size     = 0;                                               // Leave original in an undetermined but valid state
+    original._capacity = POLICY == VectorPolicy::EXTENDABLE ? 0 : original._capacity;
+    original._array    = std::make_unique<RawMemory[]>( original._capacity );
   }
-
 
 
 
@@ -219,21 +227,63 @@ namespace CSUF::CPSC131
       _capacity{ init_list.size()                           },
       _array   { std::make_unique<RawMemory[]>( _capacity ) }             // Pre-allocate an array of raw memory
   {
-    std::uninitialized_copy(init_list.begin(), init_list.end(), begin()); // Deep copy - move elements from initializer list placing them in _array's pre-allocated memory
-  }                                                                       // See https://en.cppreference.com/w/cpp/memory/uninitialized_move_n
+    std::uninitialized_copy(init_list.begin(), init_list.end(), begin()); // Deep copy - copy elements from initializer list placing them in _array's pre-allocated memory
+  }                                                                       // See https://en.cppreference.com/w/cpp/memory/uninitialized_copy (initializer lists have constant element and cannot be moved)
 
 
 
 
-  // Copy assignment
+  // Copy assignment (Same POLICY)
   template<typename T, VectorPolicy POLICY>
   Vector<T, POLICY> & Vector<T, POLICY>::operator=( Vector const & rhs )
   {
-    if( this != &rhs )                                                    // self assignment protection
+    // Note: The copy-swap idiom was considered and rejected for efficiency and to protect the capacity of FIXED capacity vectors
+    //       from changing. If we allowed fixed capacity vectors to assume the capacity of the right hand side this whole function
+    //       could be reduced to simply:
+    //         swap( *this, rhs);
+    //
+    //       Further, the copy-swap idiom would eliminate the move assignment operator.  That is both:
+    //         Vector & operator=( Vector const  & rhs );
+    //         Vector & operator=( Vector       && rhs );
+    //       would be replace with pass-by-value
+    //          Vector & operator=( Vector rhs );
+    //
+    //       The copy-swap idiom delegates to either the copy or move constructor thus capturing the logic (and maintenance) in
+    //       one place.
+    //         [[ Lippman Lajoie Moo, C++ Primer 5e, 2013, Section 13.3, Swap ]]
+    //         [[ Stack Overflow, What is the copy-and-swap idiom?, http://stackoverflow.com/questions/3279543/what-is-the-copy-and-swap-idiom ]]
+    //
+    //       Eliminating the move assignment operator, greatly simplifying this copy assignment operator, and at the same time
+    //       creating a stronger, safer exception guarantee is admittedly very seductive and tempting ...
+
+
+    if( this == &rhs )    return *this;                                   // Self assignment guard
+
+
+    std::size_t extent = 0;                                               // Determine how many elements to copy
+    if constexpr( POLICY == VectorPolicy::EXTENDABLE )
     {
-      clear();                                                            // destroy my objects before adopting the new ones
-      for( auto && current : rhs )    push_back( current );               // copy elements - Fixed Capacity vectors will throw an exception if rhs.size() > this->_capacity
+      extent = rhs._size;                                                 // The number of elements to be copied from the rhs
+      if( extent > _capacity )
+      {
+        clear();                                                          // Avoid moving elements to a bigger array, they're going to be overwritten anyway
+        reserve( extent );                                                // EXTENDABLE vectors can grow
+      }
     }
+    else  extent = std::min( _capacity, rhs._size );                      // FIXED capacity vectors are capped
+
+
+    if (_size < extent)                                                   // Copy assign up to _size elements, then construct the rest
+    {
+      std::copy_n( rhs.begin(), _size, begin() );
+      std::uninitialized_copy( rhs.begin() + _size, rhs.begin() + extent, begin() + _size );
+    }
+    else                                                                  // Copy assign up to extent elements,  then destroy the rest
+    {
+      std::copy_n( rhs.begin(), extent, begin() );                        // Could throw and we may have already our contents.  The copy-swap idiom provides
+      std::destroy( begin() + extent, begin() + _size );                  // a stronger safety guarantee but would always require new dynamic memory requests
+    }
+    _size = extent;
 
     return *this;
   }
@@ -241,30 +291,34 @@ namespace CSUF::CPSC131
 
 
 
-  // Move assignment
+  // Move assignment (Same POLICY)
   template<typename T, VectorPolicy POLICY>
   Vector<T, POLICY> & Vector<T, POLICY>::operator=( Vector && rhs ) noexcept
   {
-    if( this != &rhs )                                                    // self assignment protection
+    if( this == &rhs )    return *this;                                   // Self assignment guard
+
+
+    if( POLICY == VectorPolicy::EXTENDABLE  ||  _capacity == rhs._capacity )
     {
-      clear();                                                            // destroy my objects before adopting the new ones
-
-      if( POLICY == VectorPolicy::EXTENDABLE  ||  _capacity == rhs._capacity )
-      {
-        _size     = rhs._size;
-        _capacity = rhs._capacity;
-        _array    = std::move( rhs._array );                              // Shallow copy - move the pointer, not what the pointer points to.
-                                                                          // adopt the new objects and release my dynamic memory
-        rhs._size = rhs._capacity = 0;                                    // leave rhs in a valid state (rhs._array has already been set to nullptr)
-      }
-
-      else
-      {
-        // Don't allow capacity to change.  Fixed capacity vectors of different capacities can be assigned to each other, but
-        // trying to but too much stuff into a smaller vector is an error (i.e., this->capacity() < rhs.size())
-        for( auto && current : rhs )    push_back( std::move (current) ); // move elements - will throw an exception if rhs.size() > this->_capacity
-      }
+      swap( *this, rhs );                                                 // Shallow copy (exchange) each attribute
     }
+
+    else
+    {
+      std::size_t extent = std::min( _capacity, rhs._size );              // The number of elements to be copied from the rhs
+      if (_size < extent)                                                 // Move assign up to _size elements, then construct the rest
+      {
+        std::move              ( rhs.begin(),         rhs.begin() + _size,  begin()         );
+        std::uninitialized_move( rhs.begin() + _size, rhs.begin() + extent, begin() + _size );
+      }
+      else                                                                // Move assign up to extent elements,  then destroy the rest
+      {
+        std::move   ( rhs.begin(),      begin() + extent, begin() );
+        std::destroy( begin() + extent, begin() + _size           );
+      }
+      _size = extent;
+    }
+
     return *this;
   }
 
@@ -334,7 +388,7 @@ namespace CSUF::CPSC131
   typename Vector<T, POLICY>::iterator    Vector<T, POLICY>::begin()
   {
     // access and return pointer-to-array-of-elements held by unique_ptr without changing ownership
-    return reinterpret_cast<T *>( _array.get() );                         // cast pointer-to-uninitialized memory to a pointer-to-T
+    return reinterpret_cast<T *>( _array.get() );                         // Cast pointer-to-uninitialized memory to a pointer-to-T
  }
 
 
@@ -351,7 +405,7 @@ namespace CSUF::CPSC131
   // begin() const
   template<typename T, VectorPolicy POLICY>
   typename Vector<T, POLICY>::const_iterator    Vector<T, POLICY>::begin() const
-  { return const_cast<Vector *>( this )->begin(); }                       // to ensure consistent behavior and to implement the logic in one place, delegate to non-cost version
+  { return const_cast<Vector *>( this )->begin(); }                       // To ensure consistent behavior and to implement the logic in one place, delegate to non-cost version
                                                                           // Can't just return begin(), that'd be an infinite loop
 
 
@@ -359,7 +413,7 @@ namespace CSUF::CPSC131
   // end() const
   template<typename T, VectorPolicy POLICY>
   typename Vector<T, POLICY>::const_iterator    Vector<T, POLICY>::end() const
-  { return const_cast<Vector *>( this )->end(); }                         // to ensure consistent behavior and to implement the logic in one place, delegate to non-cost version
+  { return const_cast<Vector *>( this )->end(); }                         // To ensure consistent behavior and to implement the logic in one place, delegate to non-cost version
                                                                           // Can't just return end(), that'd be an infinite loop
 
 
@@ -367,7 +421,7 @@ namespace CSUF::CPSC131
   // cbegin() const
   template<typename T, VectorPolicy POLICY>
   typename Vector<T, POLICY>::const_iterator    Vector<T, POLICY>::cbegin() const
-  { return begin(); }                                                     // to ensure consistent behavior and to implement the logic in one place, delegate to begin()
+  { return begin(); }                                                     // To ensure consistent behavior and to implement the logic in one place, delegate to begin()
 
 
 
@@ -375,7 +429,7 @@ namespace CSUF::CPSC131
   // cend() const
   template<typename T, VectorPolicy POLICY>
   typename Vector<T, POLICY>::const_iterator    Vector<T, POLICY>::cend() const
-  { return end(); }                                                       // to ensure consistent behavior and to implement the logic in one place, delegate to end()
+  { return end(); }                                                       // To ensure consistent behavior and to implement the logic in one place, delegate to end()
 
 
 
@@ -396,7 +450,7 @@ namespace CSUF::CPSC131
   // at() const
   template<typename T, VectorPolicy POLICY>
   const T &   Vector<T, POLICY>::at( std::size_t index ) const
-  { return const_cast<Vector *>( this )->at( index ); }                   // to ensure consistent behavior and to implement the logic in one place, delegate to non-cost version
+  { return const_cast<Vector *>( this )->at( index ); }                   // To ensure consistent behavior and to implement the logic in one place, delegate to non-cost version
 
 
 
@@ -407,7 +461,7 @@ namespace CSUF::CPSC131
   {
     if( index >= _size ) throw std::out_of_range( std::string("index out of bounds:  ") + __FILE__ + " @line " + std::to_string( __LINE__ ) + " in function \"" + __func__ + '"' );   // clang not yet ready for std::source_location
 
-    return operator[]( index );                                           // to ensure consistent behavior and to implement the logic in one place, delegate to unchecked operator[]
+    return operator[]( index );                                           // To ensure consistent behavior and to implement the logic in one place, delegate to unchecked operator[]
     // could also be coded as:
     //  return (*this)[ index ];
   }
@@ -418,7 +472,7 @@ namespace CSUF::CPSC131
   // operator[] const
   template<typename T, VectorPolicy POLICY>
   const T &   Vector<T, POLICY>::operator[]( std::size_t index ) const
-  { return const_cast<Vector &>( *this )[ index ]; }                      // to ensure consistent behavior and to implement the logic in one place, delegate to non-cost version
+  { return const_cast<Vector &>( *this )[ index ]; }                      // To ensure consistent behavior and to implement the logic in one place, delegate to non-cost version
 
 
 
@@ -479,7 +533,7 @@ namespace CSUF::CPSC131
   // push_back()
   template<typename T, VectorPolicy POLICY>
   void    Vector<T, POLICY>::push_back( T const & value )
-  { insert( end(), value ); }                                             // delegate to insert() leveraging error checking - insert before the end
+  { insert( end(), value ); }                                             // Delegate to insert() leveraging error checking - insert before the end
 
 
 
@@ -487,7 +541,7 @@ namespace CSUF::CPSC131
   // pop_back()
   template<typename T, VectorPolicy POLICY>
   void Vector<T, POLICY>::pop_back()
-  { erase( end()-1 ); }                                                   // delegate to erase() leveraging error checking - erase the last element, which is one before the end, or begin() + (size-1)
+  { erase( end()-1 ); }                                                   // Delegate to erase() leveraging error checking - erase the last element, which is one before the end, or begin() + (size-1)
 
 
 
@@ -530,28 +584,43 @@ namespace CSUF::CPSC131
     // provide alternatives for students to see and use in their own code.  Students should pick just one of these options, and
     // of course do not include the "if constexpr (...)" statement
 
-    // Option 1:  Write your own loop using pointers
-    if constexpr( false )
+    // Option 1:  Write your own loop using indexes
+    if constexpr( true )
+    {
+      const auto        array        = begin();
+      const std::size_t erasurePoint = position - begin();    // Convert iterator to index.  Another valid technique:  auto erasurePoint = std::distance( begin(), position )
+
+      for( auto current = erasurePoint + 1; current != _size; ++current )
+      {
+        array[current - 1] = std::move( array[current] );
+      }
+    }
+
+    // Option 2:  Write your own loop using pointers
+    else if constexpr( false )
     {
       for( auto current = position + 1;   current != end();   ++current )     *( current-1 ) = std::move( *current );
     }
 
-    // Option 2:  Use the standard move function providing the range of elements to be moved and where to put them
-    else if constexpr( true )
+    // Option 3:  Use the standard move function providing the range of elements to be moved and where to put them
+    //            std::shift_left(...) was introduced in C++20, and std::ranges::shift(...) in C++23
+    else if constexpr( false )
     {
-      std::move( position + 1, end(),                                     // move everything from "position + 1" up to but not including "end()"
+      std::move( position + 1, end(),                                     // Move everything from "position + 1" up to but not including "end()"
                  position           );                                    // to a new place starting at "position"
     }
 
-    // Option 3:  Write your own loop using indexes
+    // Option 4:  Use the standard shift_left function providing the range of elements to be moved and the number of positions to shift
+    //            shifting still moves the objects (calls the move assignment operator) like std::move(...), but the concepts and
+    //            parameters are a little easier to comprehend
+    //            std::shift_left(...) was introduced in C++20, and std::ranges::shift_left(...) in C++23
     else
     {
-      std::size_t erasurePoint = position - begin();                      // convert iterator to index.  Another valid technique:  auto erasurePoint = std::distance( begin(), position )
-      for( auto current = erasurePoint + 1;   current != _size;   ++current )     _array[current-1] = std::move( _array[current] );
+      std::shift_left( position, end(), 1 );                              // shift everything to the left 1 position
     }
 
     // All options then need to adjust the size and return the position of the element just after the one removed
-    --_size;                                                              // changing _size also changes end()
+    --_size;                                                              // Changing _size also changes end()
     end()->~T();                                                          // Destroy the last object which is no longer part of the vector.  Avoid dereferencing end() beyond this point
     return position;
   }
@@ -562,7 +631,7 @@ namespace CSUF::CPSC131
   // erase( const_iterator )
   template<typename T, VectorPolicy POLICY>
   typename Vector<T, POLICY>::iterator    Vector<T, POLICY>::erase( const_iterator position )
-  { return erase( const_cast<iterator>(position) ); }                     // to ensure consistent behavior and to implement the logic in one place, delegate to the non-const iterator version
+  { return erase( const_cast<iterator>(position) ); }                     // To ensure consistent behavior and to implement the logic in one place, delegate to the non-const iterator version
 
 
 
@@ -594,7 +663,7 @@ namespace CSUF::CPSC131
         // to an index before reserving more capacity, and then restored afterwards by converting the index to an iterator
         // (pointer).
         std::size_t index = position - begin();                           // Convert iterator to index
-        reserve( _capacity == 0 ? 8 : 2 * _capacity );                    // double non-zero capacity
+        reserve( _capacity == 0 ? 8 : 2 * _capacity );                    // Double non-zero capacity
         position = begin() + index;                                       // Convert index to iterator
       }
     }
@@ -622,13 +691,13 @@ namespace CSUF::CPSC131
     //           begin()  position                   size / end()
 
     if( position == end() )
-    {                                                                     // nothing to move, so just place the value at the end. Because
+    {                                                                     // Nothing to move, so just place the value at the end. Because
       std::construct_at( end(),   value );                                // _array[_size] (i.e. *end()) contains uninitialized memory, the object
     }                                                                     // placed there must be constructed.
 
     else
     {
-      std::construct_at( end(),   std::move( *(end()-1) ) );              // move the last element over 1 slot.  Because _array[_size] (i.e. *end())
+      std::construct_at( end(),   std::move( *(end()-1) ) );              // Move the last element over 1 slot.  Because _array[_size] (i.e. *end())
                                                                           // contains uninitialized memory, the object placed there must be
                                                                           // constructed.
 
@@ -638,37 +707,48 @@ namespace CSUF::CPSC131
       // provide alternatives for students to see and use in their own code.  Students should pick just one of these options, and
       // of course do not include the "if constexpr (...)" statement
       //
-      // Option 1:  Write your own loop using pointers
-      if constexpr( false )
+      // Option 1:  Write your own loop using indexes
+      if constexpr( true )
+      {
+        const auto        array          = begin();                       // An array is just a pointer to the first element
+        const std::size_t insertionPoint = position - begin();            // Convert iterator to index.  Another valid technique:  auto insertionPoint = std::distance( begin(), position )
+
+        for( auto destination = _size - 1; destination != insertionPoint; --destination )  // we already made sure _size is greater than zero above
+        {
+          array[destination] = std::move( array[destination - 1] );       // Avoid _array[destination] - that is a raw memory (very shallow) bit copy
+        }
+      }
+
+      // Option 2:  Write your own loop using pointers
+      else if constexpr( false )
       {
         // Make sure "current" never equals begin().  That would cause *(current-1) to break
         for( auto destination = end()-1;   destination != position;   --destination )    *destination = std::move( *( destination-1 ) );
       }
 
-      // Option 2:  Use the standard move backwards function providing the range of elements to be moved and where to put them
-      else if constexpr( true )
+      // Option 3:  Use the standard move backwards function providing the range of elements to be moved and where to put them
+      else if constexpr( false )
       {
-        std::move_backward( position, end()-1,                            // move everything from "position" up to but not including "end()-1"
+        std::move_backward( position, end()-1,                            // Move everything from "position" up to but not including "end()-1"
                                       end() );                            // to a new place ending at "end()"
       }
 
-      // Option 3:  Write your own loop using indexes
+      // Option 4:  Use the standard shift_right function providing the range of elements to be moved and the number of positions to shift
+      //            shifting still moves the objects (calls the move assignment operator) like std::move_backward(...), but the concepts and
+      //            parameters are a little easier to comprehend
+      //            std::shift_right(...) was introduced in C++20, and std::ranges::shift_right(...) in C++23
       else
       {
-        std::size_t position_index = position - begin();                  // convert iterator to index
-        for( auto destination = _size - 1; destination != position_index; --destination )
-        {
-          begin()[destination] = std::move( begin()[destination - 1] );   // avoid _array[destination] - that is a raw memory (very shallow) bit copy
-        }
+        std::shift_right( position, end(), 1 );                           // shift everything to the right 1 position
       }
 
 
       // All options then need to actually insert the element and adjust the size
-      *position = value;                                                // fill the empty slot with a copy of "value"
+      *position = value;                                                  // Fill the empty slot with a copy of "value"
     }
 
     // Don't forget to adjust the vector's size
-    ++_size;                                                              // changing _size also changes end()
+    ++_size;                                                              // Changing _size also changes end()
 
     // Return an iterator to the element just inserted
     return position;
@@ -680,7 +760,7 @@ namespace CSUF::CPSC131
   // insert( const_iterator )
   template<typename T, VectorPolicy POLICY>
   typename Vector<T, POLICY>::iterator    Vector<T, POLICY>::insert( const_iterator position,  T const & value )
-  { return insert( const_cast<iterator>(position), value ); }             // to ensure consistent behavior and to implement the logic in one place, delegate to the non-const iterator version
+  { return insert( const_cast<iterator>(position), value ); }             // To ensure consistent behavior and to implement the logic in one place, delegate to the non-const iterator version
 
 
 
@@ -689,7 +769,8 @@ namespace CSUF::CPSC131
   template<typename T, VectorPolicy POLICY>
   void    Vector<T, POLICY>::clear() noexcept
   {
-    for( auto && current : *this ) current.~T();
+    std::destroy( begin(), end() );
+    //for( auto && current : *this ) current.~T();
     _size = 0;
   }
 
@@ -734,7 +815,8 @@ namespace CSUF::CPSC131
       std::uninitialized_move( begin(), end(), reinterpret_cast<T *>( newArray.get() ) );
 
       // Destroy the remnants of the old objects.
-      for( auto && current : *this ) current.~T();                      // uses begin() and end() of original, smaller array
+      std::destroy( begin(), end() );
+      //for( auto && current : *this ) current.~T();                      // Uses begin() and end() of original, smaller array
 
       // Release the smaller array and adopt the new bigger array.  Smart pointer assignment releases the smaller array's
       // dynamically allocated memory.  Once "_array" is set to the "newArray", begin() and end() will return iterators to the new,
@@ -767,10 +849,11 @@ namespace CSUF::CPSC131
   {
     // Find the first element that's different and you have your answer.  If the Vectors are different sizes but all the leading
     // elements match, then the Vector with the smallest size is less than the other
-    auto const extent = _size < rhs._size  ?  _size  :  rhs._size;        //  min(size, rhs.size)
+    auto const extent = std::min( _size, rhs._size );
+
     for (auto p = begin(), end = p + extent, q = rhs.begin();   p != end;   ++p, ++q)
     {
-      auto result = std::compare_weak_order_fallback( *p, *q );                // uses operator== and operator< if operator<=> is unavailable
+      auto result = std::compare_weak_order_fallback( *p, *q );                // Uses operator== and operator< if operator<=> is unavailable
       if( result != 0 ) return result;
     }
 
@@ -835,7 +918,7 @@ namespace CSUF::CPSC131
 
 
 /***********************************************************************************************************************************
-** (C) Copyright 2022 by Thomas Bettens. All Rights Reserved.
+** (C) Copyright 2023 by Thomas Bettens. All Rights Reserved.
 **
 ** DISCLAIMER: The participating authors at California State University's Computer Science Department have used their best efforts
 ** in preparing this code. These efforts include the development, research, and testing of the theories and programs to determine
@@ -848,7 +931,8 @@ namespace CSUF::CPSC131
 /**************************************************
 ** Last modified:  21-OCT-2021  (refactored C++20 workarounds)
 ** Last Verified:  03-JAN-2022
-** Verified with:  MS Visual Studio 2019 Version 16.11.8 (C++20)
-**                 GCC version 11.2.1 20211124 (-std=c++20 ),
-**                 Clang version 13.0.0 (-std=c++20 -stdlib=libc++)
+** Last modified:  06-AUG-2023  (Added shift_* and fixed erase bug)
+** Verified with:  MS Visual Studio 2022 Version 17.6.5 (C++20)
+**                 GCC version 13.1.1 20230720 (-std=c++20 ),
+**                 Clang version 16.0.6 (-std=c++20 -stdlib=libc++)
 ***************************************************/
