@@ -585,7 +585,7 @@ namespace CSUF::CPSC131
     // of course do not include the "if constexpr (...)" statement
 
     // Option 1:  Write your own loop using indexes
-    if constexpr( true )
+    if constexpr( false )
     {
       const auto        array        = begin();
       const std::size_t erasurePoint = position - begin();    // Convert iterator to index.  Another valid technique:  auto erasurePoint = std::distance( begin(), position )
@@ -708,7 +708,7 @@ namespace CSUF::CPSC131
       // of course do not include the "if constexpr (...)" statement
       //
       // Option 1:  Write your own loop using indexes
-      if constexpr( true )
+      if constexpr( false )
       {
         const auto        array          = begin();                       // An array is just a pointer to the first element
         const std::size_t insertionPoint = position - begin();            // Convert iterator to index.  Another valid technique:  auto insertionPoint = std::distance( begin(), position )
