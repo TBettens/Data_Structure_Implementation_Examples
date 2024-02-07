@@ -10,9 +10,11 @@
 **     operation, and std::forward_list has no size() operation.
 ***********************************************************************************************************************************/
 #pragma once
-#include <compare>                                                                    // week_ordering, strong_quality
-#include <cstddef>                                                                    // size_t
+#include <compare>                                                                    // week_ordering, strong_quality, compare_weak_order_fallback
+#include <cstddef>                                                                    // size_t, ptrdiff_t
 #include <initializer_list>                                                           // initializer_list
+#include <iostream>                                                                   // cout
+#include <iterator>                                                                   // forward_iterator_tag, next()
 #include <memory>                                                                     // unique_ptr, make_unique()
 #include <stdexcept>                                                                  // length_error, invalid_argument
 #include <utility>                                                                    // swap(), move()

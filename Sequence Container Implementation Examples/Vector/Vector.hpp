@@ -26,7 +26,7 @@
 #include <algorithm>                                                      // swap(), move(), move_backward(), shift_left(), shift_right(), copy(), copy_n(), min()
 #include <string>                                                         // string, to_string()
 #include <compare>                                                        // weak_ordering, compare_weak_order_fallback()
-#include <cstddef>                                                        // size_t
+#include <cstddef>                                                        // size_t, byte
 #include <initializer_list>                                               // initializer_list
 #include <memory>                                                         // unique_ptr, make_unique(), uninitialized_copy(), uninitialized_move(), uninitialized_move_n(), uninitialized_value_construct_n(), construct_at(), destroy()
 #include <stdexcept>                                                      // out_of_range, overflow_error, underflow_error
@@ -126,11 +126,11 @@ namespace CSUF::CPSC131
       // is destroyed and makes the implementing code simpler, but incurs 4 to 8 bytes (1 byte to hold the status, and the rest due
       // to alignment padding) of overhead added to every array element.  As the size increases, so does the wasted memory.  Since
       // we already have a way to know which slots contain objects (0 through _size-1), we can avoid the memory overhead but have to
-      // do our placement construction and destruction.
+      // do our own placement construction and destruction.
       //   std::unique_ptr< std::std::optional<T>[] > _array  = nullptr;  // considered and discarded
       //
       // A third design option is to use an array of T.  This too has the advantage having objects destroyed when "_array" is
-      // destroyed and makes the implementing code simpler, but forces every slot to be filled with a default constructed objects,
+      // destroyed and makes the implementing code simpler, but forces every slot to be filled with default constructed objects,
       // even if those objects are not logically part of the vector.  For example, a vector constructed with size = 0 and capacity =
       // 10,000, 10,000 objects are created but never used. These erroneous objects take time to construct, could potentially
       // consume resources, and must be destroyed when overwriting with a user inserted object.  We can avoid wasting this time and
@@ -139,9 +139,9 @@ namespace CSUF::CPSC131
       // example, could change from O(n) to O(1).  Such optimization can be sprinkled through the implementing code, which I've done.
       //   std::unique_ptr< T[] > _array  = nullptr;                      // Considered and discarded
       //
-      using RawMemory = std::aligned_storage_t< sizeof(T), alignof(T) >;  // Enough properly aligned uninitialized (raw) memory for one object of type T
-                                                                          // See  https://en.cppreference.com/w/cpp/types/aligned_storage
-
+      using RawMemory = struct alignas(T) {std::byte bytes[sizeof(T)]; }; // Enough properly aligned uninitialized (raw) memory for one object of type T
+                                                                          // See https://en.cppreference.com/w/cpp/language/alignas
+                                                                          //     https://en.cppreference.com/w/cpp/types/aligned_storage (deprecated in C++23)
       // Attributes
       // Note:  Physical ordering of _size, _capacity, and _array is required for construction and must be maintained
       std::size_t                   _size     = 0;                        // Number of elements in the data structure
