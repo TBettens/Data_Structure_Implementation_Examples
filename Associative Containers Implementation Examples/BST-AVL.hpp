@@ -338,7 +338,7 @@ namespace CSUF::CPSC131
   // Initialization list constructor
   template<typename Key, typename Value>
   BinarySearchTree<Key, Value>::BinarySearchTree( std::initializer_list<KeyValue_Pair> init_list )
-    : BinarySearchTree()                                                       // delegate construction of an empty tree
+    : BinarySearchTree()                                                              // delegate construction of an empty tree
   {
     for( auto && keyValue : init_list ) insert( keyValue );
   }
@@ -362,8 +362,8 @@ namespace CSUF::CPSC131
     {
       // to ensure consistent behavior and to implement the logic in one place, delegate to the copy constructor and then the move
       // assignment operator
-      *this = BinarySearchTree{ rhs };    // Don't break this into two statements, or you may lose
-    }                                     // the rvalue and get into an infinite recursive loop
+      *this = BinarySearchTree{ rhs };                                                // Don't break this into two statements, or you may lose
+    }                                                                                 // the rvalue and get into an infinite recursive loop
 
     return *this;
   }
@@ -444,6 +444,8 @@ namespace CSUF::CPSC131
   template<typename Key, typename Value>
   typename BinarySearchTree<Key, Value>::iterator BinarySearchTree<Key, Value>::begin()
   {
+    if( _root == nullptr ) return end();
+
     auto current = _root;
     while( current->_left != nullptr ) current = current->_left;
     return current;
@@ -564,7 +566,7 @@ namespace CSUF::CPSC131
       else                  current = current->_right;
     }
 
-    return nullptr;
+    return end();
   }
 
 
@@ -587,38 +589,53 @@ namespace CSUF::CPSC131
   template<typename Key, typename Value>
   std::pair<typename BinarySearchTree<Key, Value>::iterator, bool>   BinarySearchTree<Key, Value>::insert( const KeyValue_Pair & pair )
   {
-    Node *  current = _root;
-    Node *  parent  = nullptr;
-    Node ** child   = &_root;                                                         // a pointer-to-pointer-to-Node (lets us change what the pointer points to)
+    Node *             current = _root;
+    Node *             parent  = nullptr;
+    std::weak_ordering comp    = std::weak_ordering::equivalent;
+
 
     // Work your way to the bottom of the tree ...
     while( current != nullptr )
-    {
-      auto comp = std::compare_weak_order_fallback( pair.first, current->key() );
+    {                                                                                 // perform the comparison and remember the results.  if operator<=>() is not defined
+      comp = std::compare_weak_order_fallback( pair.first, current->key() );          // for type Key, then fall back to using operator<() and operator==()
 
       if( comp == 0 ) return { current, false };                                      // duplicate key found;  return the node found and indicate nothing was added to the tree
 
-      parent = current;                                                               // remember who my daddy is
-      if( comp  < 0 ) child = &current->_left,  current = current->_left ;            // if key to insert is less than the current key, go left
-      else            child = &current->_right, current = current->_right;            // otherwise, go right
+      parent = current;                                                               // remember who my daddy is and then descend down to the child
+      if( comp  < 0 ) current = current->_left ;                                      // if key to insert is less than the current key, go left
+      else            current = current->_right;                                      //   otherwise, go right
     }
 
     // Insert the new node in place (i.e., as the root node, or the left or right child node)
     Node * newNode   = new Node( pair );                                              // construction of node initializes all its pointers to null (programming note: smart pointer opportunity here)
     newNode->_parent = parent;                                                        // let the child know who's its daddy
-    *child           = newNode;                                                       // link the new node into the tree
+
+    if     ( parent == nullptr ) _root          = newNode;                            // let daddy (the parent) adopt the child
+    else if( comp   <  0       ) parent->_left  = newNode;
+    else                         parent->_right = newNode;
+
     ++_size;                                                                          // and of course increment the tree's size
 
     /************** AVL Tree Unique ************************************************************************************************
     ** Self balancing BSTs, like this AVL tree, balances the left and right subtrees as part of insertion.  Work your way from the
     ** node just inserted (which is at the bottom of the tree) all the way up to the tree's root updating height and looking for
     ** unbalanced subtrees
+    **
+    ** Balance Factor at this node calculated as Height(Left) - Height(Right)
+    ** Note:  WikiBooks defines the balance factor to be Height(Right) - Height(Left)   https://en.wikipedia.org/wiki/AVL_tree
+    **        VisuAlgo  defines the balance factor to be Height(Left)  - Height(Right)  https://visualgo.net/en/bst
+    **        I tend to use Height(Left) - Height(Right) in classroom lectures, but it really doesn't matter. If abs( Height(Left) -
+    **        Height(Right) ) >= 2, then it needs to be rebalanced
     *******************************************************************************************************************************/
-      for( current = parent;  current != nullptr;  current = current->_parent)        // we know the node just inserted has no children, has height of 0, and is
-      {                                                                               // balanced, so we can start with it's parent and save looking at one node
-        updateHeight( current );
-        if( !isBalanced( current ) )   current = reBalance( current );                // By definition, at most one rebalance (rotation) will be required, so we could stop here ...
-      }
+    for( current = parent;  current != nullptr;  current = current->_parent)          // we know the node just inserted has no children, has height of 0, and is
+    {                                                                                 // balanced, so we can start with it's parent and save looking at one node
+      auto previousHeight = current->_height;
+      updateHeight( current );
+
+      if( !isBalanced( current ) )   current = reBalance( current );                  // if offending node found, let's fix it
+
+      if( previousHeight == current->_height ) break;                                 // height has not changed, node insertion has been absorbed, and we can stop back tracing
+    }
     /************** End AVL Tree Unique *******************************************************************************************/
 
 
@@ -641,7 +658,7 @@ namespace CSUF::CPSC131
     if( position == end() ) return 0;                                                 // if the key wasn't found, no nodes have been deleted
 
     erase( position );
-    return 1;                                                                         // Otherwise, one node (remember, no duplicates) has been removed
+    return 1;                                                                         // otherwise, one node (remember, no duplicates) has been removed
   }
 
 
@@ -653,48 +670,58 @@ namespace CSUF::CPSC131
   {
     if( position == cend() ) return end();                                            // empty tree, do nothing
 
-    Node *   position_ptr   = position._nodePtr;                                      // Convert the iterator to a pointer-to-Node for convenience
+    Node * to_be_erased = position._nodePtr;                                          // convert the iterator to a pointer-to-Node for convenience
 
-    if( position_ptr->_left && position_ptr->_right )                                 // two children (programming note: a non-null pointer is "true")
+    if( to_be_erased->_left != nullptr  &&  to_be_erased->_right != nullptr )         // two children (programming note: a non-null pointer is "true")
     {
-      Node * succ_ptr = successor( position_ptr );
-      // Copy {key, value} pair from succ_ptr to position_ptr
+      Node * succ_ptr = successor( to_be_erased );
+      // Move (don't copy) {key, value} pair from succ_ptr to to_be_erased
       //
       // Programming note:  The {key, value} pair's Key is constant to protect from (unintentionally ?) altering it and thus
       //   breaking the tree's key ordering invariant.  But in this specific case, we really do need to overwrite the key's content.
       //   So let's temporarily cast away its const-ness and assign the new content
-      const_cast<Key &>( position_ptr->key  () ) =  const_cast<Key &&>( succ_ptr->key  () );
-                         position_ptr->value()   =  std::move         ( succ_ptr->value() );
+      const_cast<Key &>( to_be_erased->key  () ) =  const_cast<Key &&>( succ_ptr->key  () );  // Programming note:  casting to a non-constant R-Value reference causes the move assignment operator to be called
+                         to_be_erased->value()   =  std::move         ( succ_ptr->value() );
       erase( succ_ptr );
-      return position_ptr;                                                            // return the same node, but with updated content
+      return to_be_erased;                                                            // return the same node, but with updated content
     }
 
     else                                                                              // zero or one child
     {
-      Node ** parent = position_ptr->_parent        == nullptr      ? & _root         // "parent" is a pointer-to-pointer-to-Node; tells us what pointer to update
-                   :   position_ptr->_parent->_left == position_ptr ? & position_ptr->_parent->_left
-                   :                                                  & position_ptr->_parent->_right;
+      Node ** parent = to_be_erased->_parent        == nullptr      ? & _root         // "parent" is a pointer-to-pointer-to-Node; tells us what pointer to update
+                   :   to_be_erased->_parent->_left == to_be_erased ? & to_be_erased->_parent->_left
+                   :                                                  & to_be_erased->_parent->_right;
 
-      Node * child = position_ptr->_left  ?  position_ptr->_left  :  position_ptr->_right;
+      Node * child = to_be_erased->_left != nullptr  ?  to_be_erased->_left  :  to_be_erased->_right;
 
       *parent = child;                                                                // remove me from the tree by making my parent point to my child
-      if( child ) child->_parent = position_ptr->_parent;                             // and my child point to my parent
+      if( child != nullptr )  child->_parent = to_be_erased->_parent;                 // and my child point to my parent
 
 
       /************** AVL Tree Unique **********************************************************************************************
       ** Self balancing BSTs, like this AVL tree, balances the left and right subtrees as part of erase.  Work your way from the
       ** node just erased (which is at the bottom of the tree) all the way up to the tree's root updating height and looking for
       ** unbalanced subtrees
+      **
+      ** Balance Factor at this node calculated as Height(Left) - Height(Right)
+      ** Note:  WikiBooks defines the balance factor to be Height(Right) - Height(Left)   https://en.wikipedia.org/wiki/AVL_tree
+      **        VisuAlgo  defines the balance factor to be Height(Left)  - Height(Right)  https://visualgo.net/en/bst
+      **        I tend to use Height(Left) - Height(Right) in classroom lectures, but it really doesn't matter. If abs( Height(Left) -
+      **        Height(Right) ) >= 2, then it needs to be rebalanced
       *****************************************************************************************************************************/
-        for( auto current = position_ptr->_parent; current != nullptr; current = current->_parent )
-        {
-          updateHeight( current );
-          if( !isBalanced( current ) )   current = reBalance( current );              // there may be more than one rebalance necessary, so walk all the way to the root
-        }
+      for( auto current = to_be_erased->_parent;  current != nullptr;  current = current->_parent )
+      {
+        auto previousHeight = current->_height;
+        updateHeight( current );
+
+        if( !isBalanced( current ) )   current = reBalance( current );                // if offending node found, let's fix it
+
+        if( previousHeight == current->_height ) break;                               // height has not changed, node removal has been absorbed, and we can stop back tracing
+      }
       /************** End AVL Tree Unique ******************************************************************************************/
 
       iterator temp = std::next( position )._nodePtr;                                 // converts const_iterator to iterator
-      delete position_ptr;
+      delete to_be_erased;
       --_size;
       return temp;                                                                    // return the node after the one removed
     }
@@ -792,10 +819,10 @@ namespace CSUF::CPSC131
     //   2) The left and right subtrees already have an accurate height
     //
     // Programming note:  Be careful how you subtract the left and right subtree heights.  Height is an unsigned type and
-    //                    subtracting a big number from a small number gives a really big number, not a negative number.
+    //                    subtracting a big number from a small number gives a really big positive number, not a negative number.
     if( p == nullptr ) return true;
 
-    std::size_t balanceFactor = p->_height;
+    std::size_t balanceFactor = p->_height;                                                                         // A node without both children can only be 0, 1, or 2 high, otherwise it would have been rebalanced
 
     if( p->_left != nullptr  &&  p->_right != nullptr)                                                              // has two children
     {
@@ -916,9 +943,9 @@ namespace CSUF::CPSC131
     Node * T2 = nullptr;                                                              // subtree to be reconnected in new structure
     Node * T3 = nullptr;                                                              // subtree to be reconnected in new structure
 
-    if( z->key() < y->key() )                                                         // right
+    if( z->_right == y )                                                              // right
     {
-      if( y->key() < x->key() )                                                       // right-right
+      if( y->_right == x )                                                            // right-right
       {
         a  = z;
         b  = y;
@@ -941,7 +968,7 @@ namespace CSUF::CPSC131
     }
     else                                                                              // left
     {
-      if( y->key() < x->key() )                                                       // left-right
+      if(  y->_right == x )                                                           // left-right
       {
         a  = y;
         b  = x;
@@ -1123,7 +1150,7 @@ namespace CSUF::CPSC131
   template<typename Key, typename Value>  template<typename U>
   typename BinarySearchTree<Key, Value>::template Iterator_type<U> & BinarySearchTree<Key, Value>::Iterator_type<U>::operator++()    // pre-increment
   {
-    if( _nodePtr == nullptr ) return *this;
+    if( _nodePtr == nullptr ) return *this;                                             // cannot increment past end(), should this be an error?
 
 
     // If there is a right subtree, move to this node's successor
@@ -1152,7 +1179,7 @@ namespace CSUF::CPSC131
   {
     auto temp{ *this };                                                               // make a copy of the original iterator
     operator++();                                                                     // Delegate to pre-increment leveraging error checking
-    return temp;                                                                      // retrun the copy
+    return temp;                                                                      // return the copy
   }
 
 
@@ -1162,9 +1189,8 @@ namespace CSUF::CPSC131
   template<typename Key, typename Value>  template<typename U>
   typename BinarySearchTree<Key, Value>::template Iterator_type<U> & BinarySearchTree<Key, Value>::Iterator_type<U>::operator--()    // pre-decrement
   {
-    if( _nodePtr == nullptr ) return *this;
-
-
+    if( _nodePtr == nullptr ) return *this;                                             // decrement from end():  could return the right-most node, but the iterator, nor
+                                                                                        // the underlying node, knows nothing about the tree or what the root of the tree is
     // If there is a left subtree, move to this node's predecessor
     if (_nodePtr->_left != nullptr)
     {
@@ -1191,7 +1217,7 @@ namespace CSUF::CPSC131
   {
     auto temp{ *this };                                                               // make a copy of the original iterator
     operator--();                                                                     // Delegate to pre-decrement leveraging error checking
-    return temp;                                                                      // retrun the copy
+    return temp;                                                                      // return the copy
   }
 
 
