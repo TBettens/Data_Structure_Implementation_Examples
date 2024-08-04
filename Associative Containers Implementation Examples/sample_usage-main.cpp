@@ -8,14 +8,14 @@
 
 int main()
 {
-  using CSUF::CPSC131::BinarySearchTree;
-                                                                        //             Ricardo     //
-  BinarySearchTree<std::string, double> studentGrades, gradeBook;       //             /           //
-  studentGrades.insert( {"Ricardo", 2.5 } );                            //         Ellen           //
-  studentGrades.insert( {"Ellen",   3.5 } );                            //          /  \           //
-  studentGrades.insert( {"Chen",    2.5 } );                            //       Chen  Kevin       //
-  studentGrades.insert( {"Kevin",   3.25} );                            //                \        //
-  studentGrades.insert( {"Kumar",   3.05} );                            //                Kumar    //
+  using CSUF::CPSC131::BinarySearchTree;                                //      NOT BALANCED       //        BALANCED         //
+                                                                        //             Ricardo     //       Ellen             //
+  BinarySearchTree<std::string, double> studentGrades, gradeBook;       //             /           //       /   \             //
+  studentGrades.insert( {"Ricardo", 2.5 } );                            //         Ellen           //   Chen     Kumar        //
+  studentGrades.insert( {"Ellen",   3.5 } );                            //          /  \           //            /   \        //
+  studentGrades.insert( {"Chen",    2.5 } );                            //       Chen  Kevin       //        Kevin   Ricardo  //
+  studentGrades.insert( {"Kevin",   3.25} );                            //                \        //                         //
+  studentGrades.insert( {"Kumar",   3.05} );                            //                Kumar    //                         //
 
   // exercise the copy assignment operator
   gradeBook   = studentGrades;
@@ -77,7 +77,7 @@ int main()
   }
 
   // exercise a few more capabilities
-  if( gradeBook.getHeight() != 3 ) std::cerr << "Tree height does not match expected\n";
+  if( gradeBook.getHeight() != 2 ) std::cerr << "Tree height does not match expected\n";
 
   gradeBook.erase( {"Ellen"} );
   if( gradeBook.getHeight() != 2 ) std::cerr << "Tree height does not match expected\n";
