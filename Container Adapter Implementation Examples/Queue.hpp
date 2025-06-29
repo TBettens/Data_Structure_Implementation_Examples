@@ -26,14 +26,18 @@
 ***********************************************************************************************************************************/
 #pragma once
 
-#include <array>
-#include <cstddef>                                                // size_t
-#include <iterator>                                               // distance()
-#include <stdexcept>                                              // out_of_range
-#include <string>                                                 // to_string()
-#include <type_traits>                                            // conditional_t, is_bounded_array_v
+#include <algorithm>                                                              // min
+#include <array>                                                                  // size(), begin() (really any standard container header provides these)
+#include <cstddef>                                                                // size_t
+#include <format>                                                                 // format, formatter, range_formatter
+#include <ranges>                                                                 // views::counted(), views::join()
+#include <stdexcept>                                                              // out_of_range
+#include <type_traits>                                                            // conditional_t, is_bounded_array_v
+#include <utility>                                                                // move()
 
+#include "ExceptionString.hpp"
 #include "SinglyLinkedList.hpp"
+
 
 
 
@@ -62,34 +66,36 @@ namespace CSUF::CPSC131
   template<typename T, typename UnderlyingContainer>
   class Queue_Over_List
   {
+    friend struct std::formatter<Queue_Over_List<T, UnderlyingContainer>>;        // Grant access to the formatter specialization.
+
     public:
       // Constructors, destructor, and assignments
       // Compiler synthesized default constructors, assignments, and destructor are okay
 
 
       // Queries
-      bool        empty() const noexcept;                         // returns true if the queue contains no elements, false otherwise
-      std::size_t size () const noexcept;                         // returns the number of elements in the queue
+      bool        empty() const noexcept;                                         // returns true if the queue contains no elements, false otherwise
+      std::size_t size () const noexcept;                                         // returns the number of elements in the queue
 
 
       // Accessors
-      T const & front() const;                                    // returns a read only reference to the front of the queue
-      T       & front();                                          // returns a read-write reference to the front of the queue
-      T const & back () const;                                    // returns a read only reference to the rear of the queue
-      T       & back ();                                          // returns a read-write reference to the rear of the queue
+      T const & front() const;                                                    // returns a read only reference to the front of the queue
+      T       & front();                                                          // returns a read-write reference to the front of the queue
+      T const & back () const;                                                    // returns a read only reference to the rear of the queue
+      T       & back ();                                                          // returns a read-write reference to the rear of the queue
 
 
       // Modifiers
-      void   push ( T const & value );                            // puts the value at the front of the queue and increments size
-      void   pop  (                 );                            // removes the element at the rear of the queue and decrements size
+      void   push ( T const & value );                                            // puts the value at the front of the queue and increments size
+      void   pop  (                 );                                            // removes the element at the rear of the queue and decrements size
 
 
       // Relational Operators
-      bool operator==( Queue_Over_List const & rhs ) const = default;       // returns true if this queue and the rhs queue have the same number of values in the same order, false otherwise
+      bool operator==( Queue_Over_List const & rhs ) const = default;             // returns true if this queue and the rhs queue have the same number of values in the same order, false otherwise
 
 
     private:
-      UnderlyingContainer _collection;                            // delegate object management
+      UnderlyingContainer _collection;                                            // delegate object management
   }; // Queue_Over_List
 
 
@@ -118,36 +124,38 @@ namespace CSUF::CPSC131
   template<typename T, typename UnderlyingContainer>
   class Queue_Over_Vector
   {
+    friend struct std::formatter<Queue_Over_Vector<T, UnderlyingContainer>>;      // Grant access to the formatter specialization.
+
     public:
       // Constructors, destructor, and assignments
       // Compiler synthesized default constructors, assignments, and destructor are okay
 
 
       // Queries
-      bool        empty() const noexcept;                         // returns true if the queue contains no elements, false otherwise
-      std::size_t size () const noexcept;                         // returns the number of elements in the queue
+      bool        empty() const noexcept;                                         // returns true if the queue contains no elements, false otherwise
+      std::size_t size () const noexcept;                                         // returns the number of elements in the queue
 
 
       // Accessors
-      T const & front() const;                                    // returns a read only reference to the front of the queue
-      T       & front();                                          // returns a read-write reference to the front of the queue
-      T const & back () const;                                    // returns a read only reference to the rear of the queue
-      T       & back ();                                          // returns a read-write reference to the rear of the queue
+      T const & front() const;                                                    // returns a read only reference to the front of the queue
+      T       & front();                                                          // returns a read-write reference to the front of the queue
+      T const & back () const;                                                    // returns a read only reference to the rear of the queue
+      T       & back ();                                                          // returns a read-write reference to the rear of the queue
 
 
       // Modifiers
-      void   push ( T const & value );                            // puts the value at the front of the queue and increments size
-      void   pop  (                 );                            // removes the element at the rear of the queue and decrements size
+      void   push ( T const & value );                                            // puts the value at the front of the queue and increments size
+      void   pop  (                 );                                            // removes the element at the rear of the queue and decrements size
 
 
       // Relational Operators
-      bool operator==( Queue_Over_Vector const & rhs ) const;    // returns true if this queue and the rhs queue have the same number of values in the same order, false otherwise
+      bool operator==( Queue_Over_Vector const & rhs ) const;                     // returns true if this queue and the rhs queue have the same number of values in the same order, false otherwise
 
 
     private:
-      std::size_t         _size  = 0;                             // number of elements in the queue, 0 indicates an empty container
-      std::size_t         _front = 0;                             // index of the value at the front of the queue
-      UnderlyingContainer _collection;                            // delegate object management
+      std::size_t         _size  = 0;                                             // number of elements in the queue, 0 indicates an empty container
+      std::size_t         _front = 0;                                             // index of the value at the front of the queue
+      UnderlyingContainer _collection;                                            // delegate object management
   }; // Queue_Over_Vector
 
 
@@ -175,6 +183,8 @@ namespace CSUF::CPSC131
   template<typename T, typename UnderlyingContainer>
   class Queue_Over_Array
   {
+    friend struct std::formatter<Queue_Over_Array<T, UnderlyingContainer>>;       // Grant access to the formatter specialization.
+
     public:
       // Constructors, destructor, and assignments
       Queue_Over_Array(                                 );                        // Default constructor
@@ -187,35 +197,35 @@ namespace CSUF::CPSC131
 
 
       // Queries
-      bool        empty() const noexcept;                         // returns true if the queue contains no elements, false otherwise
-      std::size_t size () const noexcept;                         // returns the number of elements in the queue
+      bool        empty() const noexcept;                                         // returns true if the queue contains no elements, false otherwise
+      std::size_t size () const noexcept;                                         // returns the number of elements in the queue
 
 
       // Accessors
-      T const & front() const;                                    // returns a read only reference to the front of the queue
-      T       & front();                                          // returns a read-write reference to the front of the queue
-      T const & back () const;                                    // returns a read only reference to the rear of the queue
-      T       & back ();                                          // returns a read-write reference to the rear of the queue
+      T const & front() const;                                                    // returns a read only reference to the front of the queue
+      T       & front();                                                          // returns a read-write reference to the front of the queue
+      T const & back () const;                                                    // returns a read only reference to the rear of the queue
+      T       & back ();                                                          // returns a read-write reference to the rear of the queue
 
 
       // Modifiers
-      void   push ( T const & value );                            // puts the value at the front of the queue and increments size
-      void   pop  (                 );                            // removes the element at the rear of the queue and decrements size
+      void   push ( T const & value );                                            // puts the value at the front of the queue and increments size
+      void   pop  (                 );                                            // removes the element at the rear of the queue and decrements size
 
 
       // Relational Operators
-      bool operator==( Queue_Over_Array const & rhs ) const;      // returns true if this queue and the rhs queue have the same number of values in the same order, false otherwise
+      bool operator==( Queue_Over_Array const & rhs ) const;                      // returns true if this queue and the rhs queue have the same number of values in the same order, false otherwise
 
 
     private:
       // Since the "array" structure has, by definition, fixed size and capacity, it's not possible to delegate all the object
       // management responsibilities as was done above. An attribute has been added to maintain the number of elements the client
       // has placed the queue.
-      std::size_t         _front = 0;                             // index of the value at the front of the queue
-      std::size_t         _size  = 0;                             // number of elements in the queue, 0 indicates an empty container
+      std::size_t         _front = 0;                                             // index of the value at the front of the queue
+      std::size_t         _size  = 0;                                             // number of elements in the queue, 0 indicates an empty container
       UnderlyingContainer _collection;
 
-      const std::size_t CAPACITY = std::size(_collection);        // note we used the more general global std::size() function, not the member function - it handles both native bounded arrays and std::array
+      const std::size_t CAPACITY = std::size(_collection);                        // note we used the more general global std::size() function, not the member function - it handles both native bounded arrays and std::array
   }; // Queue_Over_Array
 
 
@@ -272,7 +282,7 @@ namespace CSUF::CPSC131
     concept is_array_like = std::is_bounded_array_v<Container> || requires( Container c )
     { // all are required
       c[0u];
-      std::size(c);
+      std::size(c);   // Note this is std::size(), not c.size() - native arrays don't have .size() but they do have std::size()
     };
   #endif
 
@@ -494,7 +504,7 @@ namespace CSUF::CPSC131
   void Queue_Over_Vector<T, UnderlyingContainer>::push( T const & value )                       // must push and pop at opposite ends
   {
     auto capacity = _collection.capacity();
-    if( capacity == 0 ) _collection.push_back( value );                                         // special case to get things started
+    if( _size == capacity  &&  _front == 0 ) _collection.push_back( value );                    // special case to get things started
 
     else
     {
@@ -526,7 +536,7 @@ namespace CSUF::CPSC131
   template<typename T, typename UnderlyingContainer>
   void Queue_Over_Vector<T, UnderlyingContainer>::pop()                                         // must push and pop at opposite ends
   {
-    if( empty() )   throw std::out_of_range( "ERROR:  Attempt to remove a value from an empty queue" );
+    if( empty() )   throw std::out_of_range( exceptionString( "ERROR:  Attempt to remove a value from an empty queue" ) );
 
 
     _collection[_front] = T{};                                                                  // We can't really delete the value, but we can free any held resources by setting it to the default value;
@@ -554,7 +564,7 @@ namespace CSUF::CPSC131
   template<typename T, typename UnderlyingContainer>
   T & Queue_Over_Vector<T, UnderlyingContainer>::front()
   {
-    if( empty() )   throw std::out_of_range( "ERROR:  Attempt to access a value from the front of an empty queue" );
+    if( empty() )   throw std::out_of_range( exceptionString( "ERROR:  Attempt to access a value from the front of an empty queue" ) );
     return _collection[_front];
   }
 
@@ -577,7 +587,7 @@ namespace CSUF::CPSC131
   template<typename T, typename UnderlyingContainer>
   T & Queue_Over_Vector<T, UnderlyingContainer>::back()
   {
-    if( empty() )   throw std::out_of_range( "ERROR:  Attempt to access a value from the back of an empty queue" );
+    if( empty() )   throw std::out_of_range( exceptionString( "ERROR:  Attempt to access a value from the back of an empty queue" ) );
     auto back = ( _front + _size - 1 ) % _collection.capacity();                                // The back value is at size-1 then apply the modulo arithmetic
     return _collection[back];
   }
@@ -785,7 +795,7 @@ namespace CSUF::CPSC131
   void Queue_Over_Array<T, UnderlyingContainer>::push( const T & value )              // must push and pop at opposite ends
   {
     // verify there is capacity for another value
-    if( _size >= CAPACITY )    throw std::out_of_range( "ERROR:  Attempt to add to an already full queue of " + std::to_string( CAPACITY ) + " elements." );
+    if( _size >= CAPACITY )    throw std::out_of_range( exceptionString( std::format("ERROR:  Attempt to add to an already full queue of {} elements", CAPACITY) ) );
 
     auto rear = ( _front + _size ) % CAPACITY;                                        // modulo arithmetic over the container's capacity
 
@@ -803,7 +813,7 @@ namespace CSUF::CPSC131
   void Queue_Over_Array<T, UnderlyingContainer>::pop()                                // must push and pop at opposite ends
   {
     // verify there is something to remove
-    if( empty() )    throw std::out_of_range( "ERROR:  Attempt to remove an value from an empty queue" );
+    if( empty() )    throw std::out_of_range( exceptionString( "ERROR:  Attempt to remove an value from an empty queue" ) );
 
     _collection[_front] = T{};                                                        // We can't really delete the value, but we can free any held resources by setting it to the default value;
     _front              = ( _front + 1 ) % CAPACITY;                                  // move the front of the queue (modulo arithmetic over the container's capacity)
@@ -830,7 +840,7 @@ namespace CSUF::CPSC131
   template<typename T, typename UnderlyingContainer>
   T & Queue_Over_Array<T, UnderlyingContainer>::front()
   {
-    if( empty() )   throw std::out_of_range( "ERROR:  Attempt to access a value from the front of an empty queue" );
+    if( empty() )   throw std::out_of_range( exceptionString( "ERROR:  Attempt to access a value from the front of an empty queue" ) );
     return _collection[_front];
   }
 
@@ -853,7 +863,7 @@ namespace CSUF::CPSC131
   template<typename T, typename UnderlyingContainer>
   T & Queue_Over_Array<T, UnderlyingContainer>::back()
   {
-    if( empty() )   throw std::out_of_range( "ERROR:  Attempt to access a value from the back of an empty queue" );
+    if( empty() )   throw std::out_of_range( exceptionString( "ERROR:  Attempt to access a value from the back of an empty queue" ) );
     auto back = ( _front + _size - 1 ) % CAPACITY;                                    // The back value is at size-1 then apply the modulo arithmetic
     return _collection[back];
   }
@@ -918,7 +928,81 @@ namespace CSUF::CPSC131
 
 
 /***********************************************************************************************************************************
-** (C) Copyright 2022 by Thomas Bettens. All Rights Reserved.
+** Formatting Specialization Class Definition for formatting Queues
+***********************************************************************************************************************************/
+
+// The front of the queue is emitted first
+//
+// Let's display only the occupied elements in the container.  For vectors and arrays, the front of the queue can be any element.
+// The queue's content then wraps around to the beginning and the rest start at the beginning.  In these cases we'll join the first
+// and second parts forming a view from the front of the queue all the way to the rear of the queue.
+
+template<typename T, typename UnderlyingContainer>
+struct std::formatter<CSUF::CPSC131::Queue_Over_List<T, UnderlyingContainer>> : std::range_formatter<T>
+{
+  auto format( const CSUF::CPSC131::Queue_Over_List<T, UnderlyingContainer> & q, auto & ctx ) const
+  {
+    return std::range_formatter<T>::format( q._collection, ctx );
+  }
+};
+
+
+
+template<typename T, typename UnderlyingContainer>
+struct std::formatter<CSUF::CPSC131::Queue_Over_Vector<T, UnderlyingContainer>> : std::range_formatter<T>
+{
+  auto format( const CSUF::CPSC131::Queue_Over_Vector<T, UnderlyingContainer> & q, auto & ctx ) const
+  {
+    auto extent = std::min( q.size(), q._collection.capacity() - q._front );
+
+    // C++26:  counted( q._collection.begin() + q._front, extent ) | concat | counted( q._collection.begin(),q.size() - extent)
+    //    or:  q._collection | drop(q._front) | take(extent) | concat | q._collection | take(q.size() - extent)
+
+    std::array parts = { std::views::counted( q._collection.begin() + q._front, extent            ),          // Note the use of CTAD
+                         std::views::counted( q._collection.begin(),            q.size() - extent ) };
+    return std::range_formatter<T>::format( std::views::join( parts ), ctx );
+  }
+};
+
+
+
+
+template<typename T, typename UnderlyingContainer>
+struct std::formatter<CSUF::CPSC131::Queue_Over_Array<T, UnderlyingContainer>> : std::range_formatter<T>
+{
+  auto format( const CSUF::CPSC131::Queue_Over_Array<T, UnderlyingContainer> & q, auto & ctx ) const
+  {
+    auto extent = std::min( q.size(), q.CAPACITY - q._front );
+
+    // C++26:  counted( q._collection.begin() + q._front, extent ) | concat | counted( q._collection.begin(),q.size() - extent)
+    //    or:  q._collection | drop(q._front) | take(extent) | concat | q._collection | take(q.size() - extent)
+
+    std::array parts = { std::views::counted( std::begin( q._collection ) + q._front, extent            ),    // Note the use of CTAD
+                         std::views::counted( std::begin( q._collection ),            q.size() - extent ) };
+    return std::range_formatter<T>::format( std::views::join( parts ), ctx );
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/***********************************************************************************************************************************
+** (C) Copyright 2025 by Thomas Bettens. All Rights Reserved.
 **
 ** DISCLAIMER: The participating authors at California State University's Computer Science Department have used their best efforts
 ** in preparing this code. These efforts include the development, research, and testing of the theories and programs to determine
@@ -929,9 +1013,9 @@ namespace CSUF::CPSC131
 ***********************************************************************************************************************************/
 
 /**************************************************
-** Last modified:  27-JUL-2021
-** Last Verified:  03-JAN-2022
-** Verified with:  MS Visual Studio 2019 Version 16.11.8 (C++20)
-**                 GCC version 11.2.1 20211124 (-std=c++20 ),
-**                 Clang version 13.0.0 (-std=c++20 -stdlib=libc++)
+** Last modified:  14-JUN-2025
+** Last Verified:  29-JUN-2025
+** Verified with:  MS Visual Studio 2022 Version 17.14.4,  Compiler Version 19.44.35209 (C++latest)
+**                 GCC version 15.1.1 (-std=c++23 ),
+**                 Clang version 21.0.0 (-std=c++23 -stdlib=libc++)
 ***************************************************/

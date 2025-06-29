@@ -25,12 +25,15 @@
 #pragma once
 
 #include <cstddef>                                              // size_t
-#include <stdexcept>                                            // length_error
+#include <stdexcept>                                            // length_error, logic_error
+
+#include "ExceptionString.hpp"
 
 // A client may #include this file to explicitly select this null-terminated implementation, or the client may instead
 // directly #include the *.hpp file to use a defaulted implementation
 #define CSUF_CPSC131_DLL_SELECTION Null-terminated
 #include "DoublyLinkedList.hpp"
+
 
 
 
@@ -95,6 +98,11 @@ namespace CSUF::CPSC131
     if( empty() )   head = tail = newNode;                      // Both _head and _tail now point to the same, one and only node in the list
 
 
+    // Checking head for a null pointer is not logically necessary because we know head should be null if the list is empty. But a
+    // little defensive programming here is worth while.
+    else if( head == nullptr ) throw std::logic_error( exceptionString( "Error:  DoublyLinkedList insert() size and head inconsistency" ) );
+
+
     // Special Case 2:  Inserting at the front of the list?
     else if( currentNode == head )                              // Insert at front of list
     {
@@ -136,7 +144,7 @@ namespace CSUF::CPSC131
   typename DoublyLinkedList<T>::iterator DoublyLinkedList<T>::erase( const_iterator position )
   {
     // Error Case: Removing from an empty list?
-    if( empty() )   throw std::length_error( "attempt to erase from an empty list" );
+    if( empty() )   throw std::length_error( exceptionString( "attempt to erase from an empty list" ) );
 
     auto & head = self->_head;                                  // an easier to read alias for the head of the list
     auto & tail = self->_tail;                                  // an easier to read alias for the tail of the list
@@ -145,7 +153,7 @@ namespace CSUF::CPSC131
     Node * currentNode = position._nodePtr;                     // Convert iterator to pointer-to-Node
 
     // Special Case 1:  Removing a node not in the list?
-    if( position == end() )   throw std::length_error( "attempt to erase from past the end of list" );
+    if( position == end() )   throw std::length_error( exceptionString( "attempt to erase from past the end of list" ) );
 
 
     // Special Case 2:  Removing the node at the front of the list?
@@ -186,7 +194,7 @@ namespace CSUF::CPSC131
 
   // end()
   template <typename T>
-  typename DoublyLinkedList<T>::iterator DoublyLinkedList<T>::end()
+  typename DoublyLinkedList<T>::iterator DoublyLinkedList<T>::end() noexcept
   { return nullptr; }
 }    // namespace CSUF::CPSC131
 
@@ -202,7 +210,7 @@ namespace CSUF::CPSC131
 
 
 /***********************************************************************************************************************************
-** (C) Copyright 2022 by Thomas Bettens. All Rights Reserved.
+** (C) Copyright 2025 by Thomas Bettens. All Rights Reserved.
 **
 ** DISCLAIMER: The participating authors at California State University's Computer Science Department have used their best efforts
 ** in preparing this code. These efforts include the development, research, and testing of the theories and programs to determine
@@ -213,9 +221,9 @@ namespace CSUF::CPSC131
 ***********************************************************************************************************************************/
 
 /**************************************************
-** Last modified:  14-JUL-2021
-** Last Verified:  03-JAN-2022
-** Verified with:  MS Visual Studio 2019 Version 16.11.8 (C++20)
-**                 GCC version 11.2.1 20211124 (-std=c++20 ),
-**                 Clang version 13.0.0 (-std=c++20 -stdlib=libc++)
+** Last modified:  13-JUN-2025
+** Last Verified:  13-JUN-2025
+** Verified with:  MS Visual Studio 2022 Version 17.14.4,  Compiler Version 19.44.35209 (C++latest)
+**                 GCC version 15.1.0 (-std=c++23 ),
+**                 Clang version 21.0.0 (-std=c++23 -stdlib=libc++)
 ***************************************************/

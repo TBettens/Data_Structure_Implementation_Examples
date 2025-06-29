@@ -1,9 +1,14 @@
-#include <iomanip>     // quoted()
-#include <iostream>    // cout, cin, ostream, istream
-#include <string>      // string
-#include <utility>     // move()
+#include <format>                                                                 // format()
+#include <iomanip>                                                                // quoted()
+#include <iostream>                                                               // cout, cin, clog ostream, istream, print()
+#include <string>                                                                 // string
+#include <utility>                                                                // move()
 
 #include "Student.hpp"
+
+
+
+
 
 
 
@@ -16,6 +21,11 @@ namespace     // unnamed, anonymous namespace
   enum class Trace {On, Off};
   constexpr Trace tracing = Trace::Off;
 }
+
+
+
+
+
 
 
 
@@ -32,7 +42,7 @@ namespace CSUF::CPSC131
   {
     // Unlike a traditional "if" statement, "if constexpr" statement is evaluated at compile time instead of run time. Sense we know
     // at compile time if we want tracing on or off, we can optimize a little by using a compile time decision
-    if constexpr( tracing == Trace::On )    std::clog << '+' << *this << ' ' << this << " - Default Constructor:  Student()\n";
+    if constexpr( tracing == Trace::On )    std::print( std::clog, "+{:>30} {} - Default Constructor:  Student()\n", *this, this );
  }
 
 
@@ -43,7 +53,7 @@ namespace CSUF::CPSC131
       _id            ( original._id             ),
       _numOfSemesters( original._numOfSemesters )
   {
-    if constexpr( tracing == Trace::On )    std::clog << '+' << *this << ' ' << this << " - Copy Constructor:  Student( const Student & original )\n";
+    if constexpr( tracing == Trace::On )    std::print( std::clog, "+{:>30} {} - Copy Constructor:  Student( const Student & original )\n", *this, this );
   }
 
 
@@ -54,7 +64,7 @@ namespace CSUF::CPSC131
       _id            ( std::move(donor._id            ) ),
       _numOfSemesters( std::move(donor._numOfSemesters) )
   {
-    if constexpr( tracing == Trace::On )    std::clog << '+' << *this << ' ' << this << " - Move Constructor:  Student( Student && donor )\n";
+    if constexpr( tracing == Trace::On )    std::print( std::clog, "+{:>30} {} - Move Constructor:  Student( Student && donor )\n", *this, this );
   }
 
 
@@ -68,7 +78,7 @@ namespace CSUF::CPSC131
       _numOfSemesters = rhs._numOfSemesters;
       _id             = rhs._id;
     }
-    if constexpr( tracing == Trace::On )    std::clog << '=' << *this << ' ' << this << " - Copy Assignment:  operator=( const Student & rhs )\n";
+    if constexpr( tracing == Trace::On )    std::print( std::clog, "={:>30} {} - Copy Assignment:  operator=( const Student & rhs )\n", *this, this );
 
     return *this;
   }
@@ -84,7 +94,7 @@ namespace CSUF::CPSC131
       _numOfSemesters = std::move( rhs._numOfSemesters );
       _id             = std::move( rhs._id             );
     }
-    if constexpr( tracing == Trace::On )    std::clog << '=' << *this << ' ' << this << " - Move Assignment:  operator=( Student && rhs )\n";
+    if constexpr( tracing == Trace::On )    std::print( std::clog, "={:>30} {} - Move Assignment:  operator=( Student && rhs )\n", *this, this );
 
     return *this;
   }
@@ -95,7 +105,7 @@ namespace CSUF::CPSC131
   Student::Student( std::string name, unsigned nsem )
     : _name( std::move( name ) ), _numOfSemesters( nsem )
   {
-    if constexpr( tracing == Trace::On )    std::clog << '+' << *this << ' ' << this << " - Conversion Constructor:  Student( const std::string & name, unsigned nsem )\n";
+    if constexpr( tracing == Trace::On )    std::print( std::clog, "+{:>30} {} - Conversion Constructor:  Student( const std::string & name, unsigned nsem )\n", *this, this );
   }
 
 
@@ -103,7 +113,7 @@ namespace CSUF::CPSC131
   // Destructor
   Student::~Student() noexcept
   {
-    if constexpr( tracing == Trace::On )    std::clog << '-' << *this << ' ' << this << " - Destructor:  ~Student()\n";
+    if constexpr( tracing == Trace::On )    std::print( std::clog, "-{:>30} {} - Destructor:  ~Student()\n", *this, this );
   }
 
 
@@ -155,7 +165,7 @@ namespace CSUF::CPSC131
   *****************************************************************************/
   std::ostream & operator<<( std::ostream & os, const Student & student )
   {
-    return os << '{' << std::quoted( student._name ) << ", " << student._id << ", " << student._numOfSemesters << '}';
+    return os << std::format( "{}", student );
   }
 
 
@@ -177,13 +187,8 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
-
-
 /***********************************************************************************************************************************
-** (C) Copyright 2022 by Thomas Bettens. All Rights Reserved.
+** (C) Copyright 2025 by Thomas Bettens. All Rights Reserved.
 **
 ** DISCLAIMER: The participating authors at California State University's Computer Science Department have used their best efforts
 ** in preparing this code. These efforts include the development, research, and testing of the theories and programs to determine
@@ -194,9 +199,9 @@ namespace CSUF::CPSC131
 ***********************************************************************************************************************************/
 
 /**************************************************
-** Last modified:  27-JUL-2021
-** Last Verified:  03-JAN-2022
-** Verified with:  MS Visual Studio 2019 Version 16.11.8 (C++20)
-**                 GCC version 11.2.1 20211124 (-std=c++20 ),
-**                 Clang version 13.0.0 (-std=c++20 -stdlib=libc++)
+** Last modified:  08-JUN-2025
+** Last Verified:  11-JUN-2025
+** Verified with:  MS Visual Studio 2022 Version 17.14.4,  Compiler Version 19.44.35209 (C++latest)
+**                 GCC version 15.1.0 (-std=c++23 ),
+**                 Clang version 21.0.0 (-std=c++23 -stdlib=libc++)
 ***************************************************/

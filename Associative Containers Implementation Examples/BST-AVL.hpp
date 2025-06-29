@@ -9,14 +9,15 @@
 ***********************************************************************************************************************************/
 #pragma once
 #include <algorithm>                                                                  // max(), swap()
-#include <cmath>                                                                      // abs()
-#include <compare>                                                                    // week_ordering, strong_quality
+#include <compare>                                                                    // week_ordering, strong_quality, compare_weak_order_fallback
 #include <cstddef>                                                                    // size_t, ptrdiff_t
 #include <initializer_list>                                                           // initializer_list
-#include <iostream>
+#include <iostream>                                                                   // ostream, print()
 #include <iterator>                                                                   // next(), bidirectional_iterator_tag
-#include <stdexcept>                                                                  // out_of_range, length_error
+#include <stdexcept>                                                                  // out_of_range, length_error, logic_error
 #include <utility>                                                                    // pair, move()
+
+#include "ExceptionString.hpp"
 
 
 
@@ -67,14 +68,14 @@ namespace CSUF::CPSC131
 
 
       // Iterators
-      iterator       begin ();                                                        // Returns a read-write iterator to the tree's first (least) element, end() if tree is empty
-      iterator       end   ();                                                        // Returns a read-write iterator beyond the tree's last (greatest) element.  Do not dereference this Iterator
+      iterator       begin          ()       noexcept;                                // Returns a read-write iterator to the tree's first (least) element, end() if tree is empty
+      iterator       end            ()       noexcept;                                // Returns a read-write iterator beyond the tree's last (greatest) element.  Do not dereference this Iterator
 
-      const_iterator begin () const;                                                  // Returns a read-only iterator to the tree's first (least) element, end() if tree is empty
-      const_iterator end   () const;                                                  // Returns a read-only iterator beyond the tree's last (greatest) element.  Do not dereference this Iterator
+      const_iterator begin          () const noexcept;                                // Returns a read-only iterator to the tree's first (least) element, end() if tree is empty
+      const_iterator end            () const noexcept;                                // Returns a read-only iterator beyond the tree's last (greatest) element.  Do not dereference this Iterator
 
-      const_iterator cbegin() const;                                                  // Returns a read-only iterator to the tree's first (least) element, end() if tree is empty
-      const_iterator cend  () const;                                                  // Returns a read-only iterator beyond the tree's last (greatest) element.  Do not dereference this Iterator
+      const_iterator cbegin         () const noexcept;                                // Returns a read-only iterator to the tree's first (least) element, end() if tree is empty
+      const_iterator cend           () const noexcept;                                // Returns a read-only iterator beyond the tree's last (greatest) element.  Do not dereference this Iterator
 
 
       // Accessors
@@ -126,16 +127,16 @@ namespace CSUF::CPSC131
     ***************************************************************************/
     public:
       // Client visible interface (the public function)
-      long long int getHeight   () const;                                             // Returns the height of the tree, or -1 if tree is empty
-      void          printInorder() const;                                             // Prints the contents of the tree in ascending sorted order
-      Value         getMaxValue () const;                                             // more recursive algorithm examples
-      Value         getSum      () const;
+      long long int getHeight   (                    ) const;                         // Returns the height of the tree, or -1 if tree is empty
+      void          printInorder( std::ostream & ostm) const;                         // Prints the contents of the tree in ascending sorted order
+      Value         getMaxValue (                    ) const;                         // more recursive algorithm examples
+      Value         getSum      (                    ) const;
 
 
     private:
       // Private extended interface helper functions to demonstrate recursion
       long long int getHeight   ( Node * current ) const;
-      void          printInorder( Node * current ) const;                             // valid only if type Value defines operator<<
+      void          printInorder( Node * current, std::ostream & ostm ) const;        // valid only if type Value defines operator<<
       Value         getMaxValue ( Node * current ) const;                             // valid only if type Value defines operator<
       Value         getSum      ( Node * current ) const;                             // Valid only if type Value defines operator+
   };  // class BinarySearchTree
@@ -169,7 +170,7 @@ namespace CSUF::CPSC131
 
       // Compiler synthesized constructors and destructor are fine, just what we want (shallow copies, no ownership) but needed to
       // explicitly say that because there is also a user defined constructor
-      Iterator_type(                        ) = delete;                               // Default constructed Iterator_type not allowed - should create end(), if we knew what that was
+      Iterator_type(                        );                                        // Default constructed Iterator_type returns a pseudo Sentinel (null pointer in this case)
       Iterator_type( iterator const & other ) noexcept;                               // Copy constructor when U is non-const, Conversion constructor from non-const to const iterator when U is const
                                                                                       // Note parameter type is intentionally "iterator", not "Iterator_type"
       // Pre and post Increment operators move the position to the next node in the list
@@ -442,7 +443,7 @@ namespace CSUF::CPSC131
 
   // begin()
   template<typename Key, typename Value>
-  typename BinarySearchTree<Key, Value>::iterator BinarySearchTree<Key, Value>::begin()
+  typename BinarySearchTree<Key, Value>::iterator BinarySearchTree<Key, Value>::begin() noexcept
   {
     if( _root == nullptr ) return end();
 
@@ -456,7 +457,7 @@ namespace CSUF::CPSC131
 
   // end()
   template<typename Key, typename Value>
-  typename BinarySearchTree<Key, Value>::iterator BinarySearchTree<Key, Value>::end()
+  typename BinarySearchTree<Key, Value>::iterator BinarySearchTree<Key, Value>::end() noexcept
   { return nullptr; }
 
 
@@ -464,7 +465,7 @@ namespace CSUF::CPSC131
 
   // begin() const
   template<typename Key, typename Value>
-  typename BinarySearchTree<Key, Value>::const_iterator BinarySearchTree<Key, Value>::begin() const
+  typename BinarySearchTree<Key, Value>::const_iterator BinarySearchTree<Key, Value>::begin() const noexcept
   { return const_cast<BinarySearchTree &>( *this ).begin(); }                         // to ensure consistent behavior and to implement the logic in one place, delegate to non-cost version
 
 
@@ -472,7 +473,7 @@ namespace CSUF::CPSC131
 
   // end() const
   template<typename Key, typename Value>
-  typename BinarySearchTree<Key, Value>::const_iterator BinarySearchTree<Key, Value>::end() const
+  typename BinarySearchTree<Key, Value>::const_iterator BinarySearchTree<Key, Value>::end() const noexcept
   { return const_cast<BinarySearchTree &>( *this ).end(); }                           // to ensure consistent behavior and to implement the logic in one place, delegate to non-cost version
 
 
@@ -480,7 +481,7 @@ namespace CSUF::CPSC131
 
   // cbegin() const
   template<typename Key, typename Value>
-  typename BinarySearchTree<Key, Value>::const_iterator BinarySearchTree<Key, Value>::cbegin() const
+  typename BinarySearchTree<Key, Value>::const_iterator BinarySearchTree<Key, Value>::cbegin() const noexcept
   { return const_cast<BinarySearchTree &>( *this ).begin(); }                         // to ensure consistent behavior and to implement the logic in one place, delegate to non-cost version
 
 
@@ -488,7 +489,7 @@ namespace CSUF::CPSC131
 
   // cend() const
   template<typename Key, typename Value>
-  typename BinarySearchTree<Key, Value>::const_iterator BinarySearchTree<Key, Value>::cend() const
+  typename BinarySearchTree<Key, Value>::const_iterator BinarySearchTree<Key, Value>::cend() const noexcept
   { return const_cast<BinarySearchTree &>( *this ).end(); }                           // to ensure consistent behavior and to implement the logic in one place, delegate to non-cost version
 
 
@@ -521,7 +522,7 @@ namespace CSUF::CPSC131
   {
     auto it = find( key );
 
-    if( it == end() )   throw std::out_of_range( "Failure:  Attempted to access nonexistent element" );
+    if( it == end() )   throw std::out_of_range( exceptionString( "Failure:  Attempted to access nonexistent element" ) );
     return it->second;
   }
 
@@ -1126,6 +1127,19 @@ namespace CSUF::CPSC131
   ** BinarySearchTree<>::iterator Member Function Definitions
   **
   *********************************************************************************************************************************/
+  // Default constructor - needed to support std::ranges::range concept, but should never be called.
+  //
+  // Let's move the error detection to a linker error instead of a run time error by not providing an definition
+  #if 0
+    template<typename T>   template<typename U>
+    SinglyLinkedList<T>::Iterator_type<U>::Iterator_type()
+    {
+      throw std::logic_error( exceptionString( "CSUF::CPSC131::SinglyLinkedList<T> default constructed (aka Sentinel) iterators not supported" ) );
+    }
+  #endif
+
+
+
 
   // Copy constructor when U is non-const iterator, Conversion constructor from non-const to const iterator when U is a const
   // iterator Type of parameter is intentionally a non-constant iterator
@@ -1294,21 +1308,21 @@ namespace CSUF::CPSC131
   ///////////////////  Print Inorder  ///////////////////////
   // Client facing public function
   template<typename Key, typename Value>
-  void BinarySearchTree<Key, Value>::printInorder() const
-  { printInorder( _root ); }
+  void BinarySearchTree<Key, Value>::printInorder( std::ostream & ostm ) const
+  { printInorder( _root, ostm ); }
 
 
 
 
   // The private helper function
   template<typename Key, typename Value>
-  void BinarySearchTree<Key, Value>::printInorder( Node * current ) const
+  void BinarySearchTree<Key, Value>::printInorder( Node * current, std::ostream & ostm ) const
   {
     if( current == nullptr ) return;                                                             // Base case
 
-    printInorder( current->_left );                                                              // Recurse left
-    std::cout << "Key: \"" << current->key() << "\",  Value: \"" << current->value() << "\"\n";  // Visit
-    printInorder( current->_right );                                                             // Recurse right
+    printInorder( current->_left, ostm );                                             // Recurse left
+    print( ostm, "Key: {:>7}, Value: {:<5}   (aka {:m})\n", current->key(), current->value(), current->_pair);
+    printInorder( current->_right, ostm );                                            // Recurse right
   }
 
 
@@ -1328,7 +1342,7 @@ namespace CSUF::CPSC131
   template<typename Key, typename Value>
   Value BinarySearchTree<Key, Value>::getMaxValue() const
   {
-    if( _root == nullptr ) throw std::length_error( "Oops!" );
+    if( _root == nullptr ) throw std::length_error( exceptionString( "Oops!  Can't determine the maximum value of an empty tree" ) );
     return getMaxValue( _root );
   }
 

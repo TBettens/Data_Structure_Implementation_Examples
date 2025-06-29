@@ -28,6 +28,8 @@
 #include <memory>                                                             // unique_ptr, make_unique()
 #include <stdexcept>                                                          // length_error, invalid_argument
 
+#include "ExceptionString.hpp"
+
 // A client may #include this file to explicitly select this null-terminated implementation, or the client may instead
 // directly #include the *.hpp file to use a defaulted implementation
 #define CSUF_CPSC131_SLL_SELECTION Null-terminated
@@ -136,7 +138,7 @@ namespace CSUF::CPSC131
   typename SinglyLinkedList<T>::iterator SinglyLinkedList<T>::erase_after( const_iterator position )
   {
     // Error Case: Removing from an empty list?
-    if( empty() )   throw std::length_error( "attempt to remove from an empty list" );
+    if( empty() )   throw std::length_error( exceptionString( "attempt to remove from an empty list" ) );
 
 
     auto & head        = self->_head;                                         // an easier to read alias for the head of the list
@@ -223,7 +225,7 @@ namespace CSUF::CPSC131
 
 
 /***********************************************************************************************************************************
-** (C) Copyright 2022 by Thomas Bettens. All Rights Reserved.
+** (C) Copyright 2025 by Thomas Bettens. All Rights Reserved.
 **
 ** DISCLAIMER: The participating authors at California State University's Computer Science Department have used their best efforts
 ** in preparing this code. These efforts include the development, research, and testing of the theories and programs to determine
@@ -234,9 +236,9 @@ namespace CSUF::CPSC131
 ***********************************************************************************************************************************/
 
 /**************************************************
-** Last modified:  14-JUL-2021
-** Last Verified:  03-JAN-2022
-** Verified with:  MS Visual Studio 2019 Version 16.11.8 (C++20)
-**                 GCC version 11.2.1 20211124 (-std=c++20 ),
-**                 Clang version 13.0.0 (-std=c++20 -stdlib=libc++)
+** Last modified:  12-JUN-2025
+** Last Verified:  12-JUN-2025
+** Verified with:  MS Visual Studio 2022 Version 17.14.4,  Compiler Version 19.44.35209 (C++latest)
+**                 GCC version 15.1.0 (-std=c++23 ),
+**                 Clang version 21.0.0 (-std=c++23 -stdlib=libc++)
 ***************************************************/

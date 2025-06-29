@@ -1,1 +1,1 @@
-../Student/Student.cpp
+../Common/Student.cpp

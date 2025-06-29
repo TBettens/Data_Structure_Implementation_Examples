@@ -1,6 +1,6 @@
 #include <exception>
-#include <iomanip>    // quoted()
 #include <iostream>
+#include <locale>                                                                   // global()
 #include <string>
 #include <vector>
 
@@ -18,67 +18,49 @@ namespace    // anonymous
   template<typename T>
   void test( T & vector )
   {
-    std::cout << "\n\nTesting " << std::quoted( __func__ ) << '\n';
+    std::print( std::cout, "\n\nTesting {:?}\n", __func__ );
 
     Student s( "Adam", 2 );
     vector.push_back( s );
     vector.push_back( Student( "Bob", 1 ) );
     vector.push_back( Student( "Dolores", 3 ) );
 
-
-    // Should be:  "", "", "", Adam, Bob, Dolores
-    std::cout << "\n ";
-    for( const auto & student : vector ) std::cout << student << ", ";
-    std::cout << "\n\n";
-
+    // Programming Note:
+    //   Providing an range-underlying-spec (the stuff after the second colon) disables debug format, which causes the stuff in the
+    //   container to be formatted as an escaped string (like :?s does for string
+    //   See https://en.cppreference.com/w/cpp/utility/format/range_formatter.html  std::range_formatter::parse section:
+    //    "It calls underlying_.set_debug_format() if: ... there is no range-underlying-spec.
+    std::print( std::cout, "\n {:n:}\n\n", vector );                                  // Should be:  "", "", "", Adam, Bob, Dolores
 
 
 
     // add student Carla between Bob and Dolores
     vector.insert( vector.begin() + 3, Student( "Carla" ) );
-
-    // Should be:  "", "", "", Carla, Adam, Bob, Dolores
-    std::cout << "\n ";
-    for( const auto & student : vector ) std::cout << student << ", ";
-    std::cout << "\n\n";
-
+    std::print( std::cout, "\n {:n:}\n\n", vector );                                  // Should be:  "", "", "", Carla, Adam, Bob, Dolores
 
 
 
     // update Bob's record
     vector[5].updateNSemesters();
+    std::print( std::cout, " {}\n", vector[5]);                                       // Should be:  {"Bob", 20210218, 2}
 
-    // Should be:  {"Bob", 20210218, 2}
-    std::cout << ' ' << vector[5] << '\n';
 
 
     // remove student Adam (element at index 3)
     vector.erase( vector.begin()+3 );
-
-    // Should be:  "", "", "", Adam, Bob, Dolores
-    std::cout << "\n ";
-    for( const auto & student : vector ) std::cout << student << ", ";
-    std::cout << "\n\n";
+    std::print( std::cout, "\n {:n:}\n\n", vector );                                  // Should be:  "", "", "", Adam, Bob, Dolores
 
 
 
-
-    // Copy and assignment
-    auto aCopy = vector;                                              // copy construction
-
-    // Should be:  "", "", "", Adam, Bob, Dolores
-    std::cout << "\n ";
-    for( const auto & student : aCopy ) std::cout << student << ", ";
-    std::cout << "\n\n";
+    // copy construction
+    auto aCopy = vector;
+    std::print( std::cout, "\n {:n:}\n\n", aCopy );                                   // Should be:  "", "", "", Adam, Bob, Dolores
 
 
 
     vector.clear();
+    std::print( std::cout, "\n {:n:}\n\n", aCopy );                                   // Should be:  "", "", "", Adam, Bob, Dolores
 
-    // Should be:  "", "", "", Adam, Bob, Dolores
-    std::cout << "\n ";
-    for( const auto & student : aCopy ) std::cout << student << ", ";
-    std::cout << "\n\n";
 
 
     // Capacity breach
@@ -86,20 +68,18 @@ namespace    // anonymous
     {
       // For purposes of this test, let's assume the capacity is 25 or less
       for( std::size_t i = 0;  i < 25u;  ++i )    vector.push_back( s );
-      std::cout << "\nAll 25 students placed into the vector\n ";
+      std::print( std::cout, "\nAll 25 students placed into the vector\n" );
     }
     catch(const std::exception & ex)
     {
-      std::cout << ex.what() << '\n';
+       std::print( std::cout, "{}\n", ex.what() );
     }
-    std::cout << "\n\n";
+    std::print( std::cout, "\n\n" );
 
 
 
-    vector = aCopy;                                                   // assignment;
-
-    // Should be:  true
-    std::cout << "\nVectors are equal:  " << ( vector == aCopy ) << "\n\n";
+    vector = aCopy;
+    std::print( std::cout, "\nVectors are equal:  {}\n\n", vector == aCopy );         // Should be:  true
   }
 }    // anonymous namespace
 
@@ -112,11 +92,11 @@ int main()
 {
   try
   {
-    std::cout << std::boolalpha;                                                      // display boolean values as true and false instead of non-zero and zero
+    std::locale::global( std::locale( "en_US.UTF-8" ) );
 
     // Constructed providing size and sometimes capacity
     CSUF::CPSC131::Vector<Student, VectorPolicy::FIXED> fixedStudentVector(3, 10);
-    CSUF::CPSC131::Vector<Student>                      extendableStudentVector(3);    // in contrast to FixedVector, capacity is not specified
+    CSUF::CPSC131::Vector<Student>                      extendableStudentVector(3);   // in contrast to FixedVector, capacity is not specified
     std::vector<Student>                                standardStudentVector(3);
 
     // Constructed with a list of Students

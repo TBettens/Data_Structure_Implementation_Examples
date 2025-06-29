@@ -10,10 +10,13 @@
 
 #include <array>
 #include <stdexcept>                                              // out_of_range
+#include <format>                                                 // format, formatter, range_formatter
 #include <cstddef>                                                // size_t
 #include <iterator>                                               // distance()
+#include <ranges>                                                 // view::reverse, view::take
 #include <string>                                                 // to_string()
 
+#include "ExceptionString.hpp"
 #include "Vector.hpp"
 
 
@@ -41,6 +44,8 @@ namespace CSUF::CPSC131
   template<typename T, class UnderlyingContainer = CSUF::CPSC131::Vector<T>>
   class Stack
   {
+    friend struct std::formatter<Stack<T, UnderlyingContainer>>;  // Grant access to the formatter specialization.
+
     public:
       // Constructors, destructor, and assignments
       // Compiler synthesized default constructors, assignments, and destructor are okay
@@ -92,6 +97,8 @@ namespace CSUF::CPSC131
   template<typename T, std::size_t CAPACITY>
   class Stack<T, std::array<T, CAPACITY>>
   {
+    friend struct std::formatter<Stack<T, std::array<T, CAPACITY>>>;    // Grant access to the formatter specialization.
+
     public:
       // Constructors, destructor, and assignments
       // Compiler synthesized default constructors, assignments, and destructor are okay
@@ -293,7 +300,7 @@ namespace CSUF::CPSC131
   void Stack<T, std::array<T, CAPACITY>>::push( const T & element )
   {
     // verify there is capacity for another value
-    if( _size >= CAPACITY )    throw std::out_of_range( "ERROR:  Attempt to add to an already full stack of " + std::to_string( CAPACITY ) + " elements." );
+    if( _size >= CAPACITY )    throw std::out_of_range( exceptionString( std::format("ERROR:  Attempt to add to an already full stack of {} elements.", CAPACITY) ) );
 
 
     // add the value to the back of the container (e.g. top of the stack) and then increment stack's size
@@ -327,7 +334,7 @@ namespace CSUF::CPSC131
   void Stack<T, std::array<T, CAPACITY>>::pop()
   {
     // verify there is something to remove
-    if( empty() )    throw std::out_of_range( "ERROR:  Attempt to remove a value from an empty stack" );
+    if( empty() )    throw std::out_of_range( exceptionString( "ERROR:  Attempt to remove a value from an empty stack" ) );
 
     // remove the value from the back of the container (e.g. top of the stack) by decrementing the stack's size.  A more robust
     // implementation would destroy the value removed, but for now let's assume the elements are trivial (hold no resources)
@@ -373,7 +380,7 @@ namespace CSUF::CPSC131
   T & Stack<T, std::array<T, CAPACITY>>::top()
   {
     // verify there is something in the stack to look at
-    if( empty() ) throw std::out_of_range( "ERROR:  Attempt to view an value from an empty stack" );
+    if( empty() ) throw std::out_of_range( exceptionString( "ERROR:  Attempt to view an value from an empty stack" ) );
 
     // Return a reference to the back of the array (top of the stack)
     return _collection[_size - 1];
@@ -428,8 +435,49 @@ namespace CSUF::CPSC131
 
 
 
+
+
+
+
 /***********************************************************************************************************************************
-** (C) Copyright 2022 by Thomas Bettens. All Rights Reserved.
+** Formatting Specialization Class Definition for formatting Stacks
+***********************************************************************************************************************************/
+template<typename T, typename UnderlyingContainer>
+struct std::formatter<CSUF::CPSC131::Stack<T, UnderlyingContainer>> : std::range_formatter<T>
+{
+
+  auto format( const CSUF::CPSC131::Stack<T, UnderlyingContainer> & s, auto & ctx ) const
+  {
+    // Note: Semantic difference between formatting the standard stack and CSUF::CPSC131::Stack
+    //       CSUF::CPSC131::Stack:  The top of the stack is emitted first
+    //       std::stack:            The bottom of the stack is emitted first
+    //
+    // Let's display only the occupied elements in the container.  This usually impacts only underlying containers where size is
+    // equal to capacity (e.g., arrays). Instead of asking the underlying container its size, let's ask the stack its size.
+    if constexpr( CSUF::CPSC131::is_front_insertable<UnderlyingContainer> ) return std::range_formatter<T>::format( s._collection | std::views::take( s.size() )                      , ctx );
+    else                                                                    return std::range_formatter<T>::format( s._collection | std::views::take( s.size() ) | std::views::reverse, ctx );
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/***********************************************************************************************************************************
+** (C) Copyright 2025 by Thomas Bettens. All Rights Reserved.
 **
 ** DISCLAIMER: The participating authors at California State University's Computer Science Department have used their best efforts
 ** in preparing this code. These efforts include the development, research, and testing of the theories and programs to determine
@@ -440,9 +488,9 @@ namespace CSUF::CPSC131
 ***********************************************************************************************************************************/
 
 /**************************************************
-** Last modified:  10-OCT-2022
-** Last Verified:  10-OCT-2022
-** Verified with:  MS Visual Studio 2019 Version 17.3.2 (C++22)
-**                 GCC version 12.2.1 20220830 (-std=c++20 ),
-**                 Clang version 14.0.6 (-std=c++20 -stdlib=libc++)
+** Last modified:  14-JUN-2025
+** Last Verified:  29-JUN-2025
+** Verified with:  MS Visual Studio 2022 Version 17.14.4,  Compiler Version 19.44.35209 (C++latest)
+**                 GCC version 15.1.1 (-std=c++23 ),
+**                 Clang version 21.0.0 (-std=c++23 -stdlib=libc++)
 ***************************************************/

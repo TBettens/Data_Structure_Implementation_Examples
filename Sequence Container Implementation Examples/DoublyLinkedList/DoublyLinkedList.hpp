@@ -13,9 +13,14 @@
 #include <compare>                                                                    // week_ordering, strong_quality
 #include <cstddef>                                                                    // size_t
 #include <initializer_list>                                                           // initializer_list
+#include <iterator>                                                                   // reverse_iterator
 #include <memory>                                                                     // unique_ptr, make_unique<>()
-#include <stdexcept>                                                                  // length_error
+#include <stdexcept>                                                                  // length_error, logic_error
 #include <utility>                                                                    // swap(), move()
+
+#include "ExceptionString.hpp"
+
+
 
 
 
@@ -46,6 +51,10 @@ namespace CSUF::CPSC131
       using iterator       = Iterator_type<T      >;                                  // A bi-directional iterator to a read-write value in the list
       using const_iterator = Iterator_type<T const>;                                  // A bi-directional iterator to a read-only value in the list
 
+      using reverse_iterator       = std::reverse_iterator<iterator>;                 // A bi-directional iterator to a read-write value in the list
+      using const_reverse_iterator = std::reverse_iterator<const_iterator>;           // A bi-directional iterator to a read-only value in the list
+
+
 
       // Constructors, destructor, and assignments
       DoublyLinkedList            (                                       );          // default constructor
@@ -65,14 +74,24 @@ namespace CSUF::CPSC131
 
 
       // Iterators
-      iterator begin();                                                               // Returns a read-write iterator to the list's front element, end() if list is empty
-      iterator end  ();                                                               // Returns a read-write iterator beyond the list's back element.  Do not dereference this iterator
+      iterator               begin ()       noexcept;                                 // Returns a read-write iterator to the list's front element, end() if list is empty
+      iterator               end   ()       noexcept;                                 // Returns a read-write iterator beyond the list's back element.  Do not dereference this iterator
 
-      const_iterator begin () const;                                                  // Returns a read-only iterator to the list's front element, end() if list is empty
-      const_iterator end   () const;                                                  // Returns a read-only iterator beyond the list's back element.  Do not dereference this iterator
+      const_iterator         begin () const noexcept;                                 // Returns a read-only iterator to the list's front element, end() if list is empty
+      const_iterator         end   () const noexcept;                                 // Returns a read-only iterator beyond the list's back element.  Do not dereference this iterator
 
-      const_iterator cbegin() const;                                                  // Returns a read-only iterator to the list's front element, end() if list is empty
-      const_iterator cend  () const;                                                  // Returns a read-only iterator beyond the list's back element.  Do not dereference this iterator
+      const_iterator         cbegin() const noexcept;                                 // Returns a read-only iterator to the list's front element, end() if list is empty
+      const_iterator         cend  () const noexcept;                                 // Returns a read-only iterator beyond the list's back element.  Do not dereference this iterator
+
+
+      reverse_iterator       rbegin ()       noexcept;                                // Returns a read-write iterator to the list's front element, end() if list is empty
+      reverse_iterator       rend   ()       noexcept;                                // Returns a read-write iterator beyond the list's back element.  Do not dereference this iterator
+
+      const_reverse_iterator rbegin () const noexcept;                                // Returns a read-only iterator to the list's front element, end() if list is empty
+      const_reverse_iterator rend   () const noexcept;                                // Returns a read-only iterator beyond the list's back element.  Do not dereference this iterator
+
+      const_reverse_iterator crbegin() const noexcept;                                // Returns a read-only iterator to the list's front element, end() if list is empty
+      const_reverse_iterator crend  () const noexcept;                                // Returns a read-only iterator beyond the list's back element.  Do not dereference this iterator
 
 
       // Accessors
@@ -126,8 +145,16 @@ namespace CSUF::CPSC131
 
       // Compiler synthesized constructors and destructor are fine, just what we want (shallow copies, no ownership) but needed to
       // explicitly say that because there is also a user defined constructor
-      Iterator_type(                        ) = delete;                               // Default constructed Iterator_type not allowed - should create end(), if we knew what that was
-      Iterator_type( iterator const & other );                                        // Copy constructor when T is non-const, Conversion constructor from non-const to const iterator when T is const
+
+      // A default constructor should have Sentinel semantics, which is to say it indicates the end of a list.  An iterator default
+      // constructed through the class (i.e., not through a list object) should indicate the end of any list.  This behavior is not
+      // implemented here.  In particular, a default constructed iterator, this case, will not match list.end() if list is
+      // implemented as a circular list.  The Sentinel Design Pattern could be implemented as an enhancement, but I choose to not go
+      // that far primarily for simplicity.  To help prevent misuse of a default constructed iterator, I used to "delete" the
+      // default constructor.  But that stops the list from being recognized by the std::ranges:range concept which in turn prevents
+      // the list from using std::ranges based algorithms, including std::format.
+      Iterator_type(                        );                                        // Default constructed Iterator_type returns a pseudo Sentinel (null pointer in this case)
+      Iterator_type( iterator const & other ) noexcept;                               // Copy constructor when T is non-const, Conversion constructor from non-const to const iterator when T is const
 
       // Pre and post Increment operators move the position to the next node in the list
       Iterator_type & operator++();                                                   // advance the iterator one node (pre -increment)
@@ -150,7 +177,7 @@ namespace CSUF::CPSC131
       Node * _nodePtr = nullptr;
 
       // Helper functions
-      Iterator_type( Node * position );                                               // Implicit conversion constructor from pointer-to-Node to iterator-to-Node
+      Iterator_type( Node * position ) noexcept;                                      // Implicit conversion constructor from pointer-to-Node to iterator-to-Node
   };  // DoublyLinkedList<T>::Iterator_type
 
 }    // namespace CSUF::CPSC131
@@ -355,21 +382,21 @@ namespace CSUF::CPSC131
 
   // begin()
   template<typename T>
-  typename DoublyLinkedList<T>::iterator DoublyLinkedList<T>::begin()
+  typename DoublyLinkedList<T>::iterator DoublyLinkedList<T>::begin() noexcept
   { return self->_head; }
 
 
 
   // begin() const
   template<typename T>
-  typename DoublyLinkedList<T>::const_iterator DoublyLinkedList<T>::begin() const
+  typename DoublyLinkedList<T>::const_iterator DoublyLinkedList<T>::begin() const noexcept
   { return const_cast<DoublyLinkedList<T> *>(this)->begin(); }                        // to ensure consistent behavior and to implement the logic in one place, delegate to non-cost version
 
 
 
   // cbegin() const
   template<typename T>
-  typename DoublyLinkedList<T>::const_iterator DoublyLinkedList<T>::cbegin() const
+  typename DoublyLinkedList<T>::const_iterator DoublyLinkedList<T>::cbegin() const noexcept
   { return const_cast<DoublyLinkedList<T> *>(this)->begin(); }                        // to ensure consistent behavior and to implement the logic in one place, delegate to non-cost version
 
 
@@ -381,15 +408,57 @@ namespace CSUF::CPSC131
 
   // end() const
   template<typename T>
-  typename DoublyLinkedList<T>::const_iterator DoublyLinkedList<T>::end() const
+  typename DoublyLinkedList<T>::const_iterator DoublyLinkedList<T>::end() const noexcept
   { return const_cast<DoublyLinkedList<T> *>(this)->end(); }                          // to ensure consistent behavior and to implement the logic in one place, delegate to non-cost version
 
 
 
   // cend() const
   template<typename T>
-  typename DoublyLinkedList<T>::const_iterator DoublyLinkedList<T>::cend() const
+  typename DoublyLinkedList<T>::const_iterator DoublyLinkedList<T>::cend() const noexcept
   { return const_cast<DoublyLinkedList<T> *>(this)->end(); }                          // to ensure consistent behavior and to implement the logic in one place, delegate to non-cost version
+
+
+
+  // rbegin()
+  template<typename T>
+  typename DoublyLinkedList<T>::reverse_iterator DoublyLinkedList<T>::rbegin() noexcept
+  { return std::make_reverse_iterator( end() ); }
+
+
+
+  // rbegin() const
+  template<typename T>
+  typename DoublyLinkedList<T>::const_reverse_iterator DoublyLinkedList<T>::rbegin() const noexcept
+  { return std::make_reverse_iterator( end() ); }
+
+
+
+  // crbegin() const
+  template<typename T>
+  typename DoublyLinkedList<T>::const_reverse_iterator DoublyLinkedList<T>::crbegin() const noexcept
+  { return std::make_reverse_iterator( end() ); }
+
+
+
+  // rend()
+  template<typename T>
+  typename DoublyLinkedList<T>::reverse_iterator DoublyLinkedList<T>::rend() noexcept
+  { return std::make_reverse_iterator( begin() ); }
+
+
+
+  // rend() const
+  template<typename T>
+  typename DoublyLinkedList<T>::const_reverse_iterator DoublyLinkedList<T>::rend() const noexcept
+  { return std::make_reverse_iterator( begin() ); }
+
+
+
+  // crend() const
+  template<typename T>
+  typename DoublyLinkedList<T>::const_reverse_iterator DoublyLinkedList<T>::crend() const noexcept
+  { return std::make_reverse_iterator( begin() ); }
 
 
 
@@ -411,7 +480,7 @@ namespace CSUF::CPSC131
   template<typename T>
   T & DoublyLinkedList<T>::front()
   {
-    if( empty() )   throw std::length_error( "empty list" );
+    if( empty() )   throw std::length_error( exceptionString( "Attempt to access the front of an empty list" ) );
 
     return self->_head->_data;
   }
@@ -422,7 +491,7 @@ namespace CSUF::CPSC131
   template<typename T>
   T & DoublyLinkedList<T>::back()
   {
-    if( empty() )    throw std::length_error( "attempt to access data from an empty list" );
+    if( empty() )    throw std::length_error( exceptionString( "Attempt to access the back of an empty list" ) );
     return self->_tail->_data;
   }
 
@@ -563,11 +632,24 @@ namespace CSUF::CPSC131
   ** DoublyLinkedList<>::iterator Member Function Definitions
   **
   *********************************************************************************************************************************/
+  // Default constructor - needed to support std::ranges::range concept, but should never be called.
+  //
+  // Let's move the error detection to a linker error instead of a run time error by not providing an definition
+  #if 0
+    template<typename T>   template<typename U>
+    DoublyLinkedList<T>::Iterator_type<U>::Iterator_type()
+    {
+      throw std::logic_error( exceptionString( "CSUF::CPSC131::DoublyLinkedList<T> default constructed (aka Sentinel) iterators not supported" ) );
+    }
+  #endif
+
+
+
 
   // Copy constructor when U is non-const iterator, Conversion constructor from non-const to const iterator when U is a const iterator
   // Type of parameter is intentionally a non-constant iterator
   template<typename T>   template<typename U>
-  DoublyLinkedList<T>::Iterator_type<U>::Iterator_type( iterator const & other )      // Notice the parameter type is "iterator", not "Iterator_type"
+  DoublyLinkedList<T>::Iterator_type<U>::Iterator_type( iterator const & other )  noexcept    // Notice the parameter type is "iterator", not "Iterator_type"
     : _nodePtr{ other._nodePtr }
   {}
 
@@ -576,7 +658,7 @@ namespace CSUF::CPSC131
 
   // Conversion Constructor from pointer-to-Node to iterator
   template<typename T>   template<typename U>
-  DoublyLinkedList<T>::Iterator_type<U>::Iterator_type( Node * p )
+  DoublyLinkedList<T>::Iterator_type<U>::Iterator_type( Node * p ) noexcept
     : _nodePtr{ p }
   {}
 
@@ -587,7 +669,7 @@ namespace CSUF::CPSC131
   template<typename T>   template<typename U>
   typename DoublyLinkedList<T>::template Iterator_type<U> &   DoublyLinkedList<T>::Iterator_type<U>::operator++()
   {
-    if( _nodePtr == nullptr )   throw std::invalid_argument( "Attempt to increment null iterator.  Cannot increment end() for a null-terminated list" );
+    if( _nodePtr == nullptr )   throw std::invalid_argument( exceptionString( "Attempt to increment null iterator.  Cannot increment end() for a null-terminated list" ) );
 
     _nodePtr = _nodePtr->_next;
     return *this;
@@ -612,7 +694,7 @@ namespace CSUF::CPSC131
   template<typename T>   template<typename U>
   typename DoublyLinkedList<T>::template Iterator_type<U> &   DoublyLinkedList<T>::Iterator_type<U>::operator--()
   {
-    if( _nodePtr == nullptr )   throw std::invalid_argument( "Attempt to decrement null iterator.  Cannot decrement end() for a null-terminated list" );
+    if( _nodePtr == nullptr )   throw std::invalid_argument( exceptionString( "Attempt to decrement null iterator.  Cannot decrement end() for a null-terminated list" ) );
 
     _nodePtr = _nodePtr->_prev;
     return *this;
@@ -637,7 +719,7 @@ namespace CSUF::CPSC131
   template<typename T>   template<typename U>
   typename DoublyLinkedList<T>::template Iterator_type<U>::reference   DoublyLinkedList<T>::Iterator_type<U>::operator*() const
   {
-    if( _nodePtr == nullptr )   throw std::invalid_argument( "Attempt to dereference null iterator" );
+    if( _nodePtr == nullptr )   throw std::invalid_argument( exceptionString( "Attempt to dereference null iterator" ) );
 
     return _nodePtr->_data;
   }
@@ -649,7 +731,7 @@ namespace CSUF::CPSC131
   template<typename T>   template<typename U>
   typename DoublyLinkedList<T>::template Iterator_type<U>::pointer   DoublyLinkedList<T>::Iterator_type<U>::operator->() const
   {
-    if( _nodePtr == nullptr )  throw std::invalid_argument( "Attempt to dereference null iterator" );
+    if( _nodePtr == nullptr )  throw std::invalid_argument( exceptionString( "Attempt to dereference null iterator" ) );
 
     return &(_nodePtr->_data);
   }
@@ -735,7 +817,7 @@ namespace CSUF::CPSC131
 
 
 /***********************************************************************************************************************************
-** (C) Copyright 2022 by Thomas Bettens. All Rights Reserved.
+** (C) Copyright 2025 by Thomas Bettens. All Rights Reserved.
 **
 ** DISCLAIMER: The participating authors at California State University's Computer Science Department have used their best efforts
 ** in preparing this code. These efforts include the development, research, and testing of the theories and programs to determine
@@ -746,9 +828,9 @@ namespace CSUF::CPSC131
 ***********************************************************************************************************************************/
 
 /**************************************************
-** Last modified:  03-JAN-2022
-** Last Verified:  03-JAN-2022
-** Verified with:  MS Visual Studio 2019 Version 16.11.8 (C++20)
-**                 GCC version 11.2.1 20211124 (-std=c++20 ),
-**                 Clang version 13.0.0 (-std=c++20 -stdlib=libc++)
+** Last modified:  13-JUN-2025
+** Last Verified:  13-JUN-2025
+** Verified with:  MS Visual Studio 2022 Version 17.14.4,  Compiler Version 19.44.35209 (C++latest)
+**                 GCC version 15.1.0 (-std=c++23 ),
+**                 Clang version 21.0.0 (-std=c++23 -stdlib=libc++)
 ***************************************************/

@@ -34,7 +34,7 @@
 #include <utility>                                                        // move()
 
 
-
+#include "ExceptionString.hpp"
 
 
 
@@ -79,12 +79,12 @@ namespace CSUF::CPSC131
 
 
       // Iterators
-      iterator       begin ();                                            // Read-write access to the vector's first element.  Also enables Vector to be used in range-based for loops
-      iterator       end   ();                                            // Read-write access to one past the vector's last element.  Never dereference end(), but you can decrement the returned iterator and then dereference
-      const_iterator begin () const;                                      // Read-only access to the vector's first element
-      const_iterator end   () const;                                      // Read-only access to one past the vector's last element.  Never dereference end(), but you can decrement the returned iterator and then dereference
-      const_iterator cbegin() const;                                      // Read-only access to the vector's first element
-      const_iterator cend  () const;                                      // Read-only access to one past the vector's last element.  Never dereference end(), but you can decrement the returned iterator and then dereference
+      constexpr iterator begin       ()       noexcept;                   // Read-write access to the vector's first element.  Also enables Vector to be used in range-based for loops
+      constexpr iterator end         ()       noexcept;                   // Read-write access to one past the vector's last element.  Never dereference end(), but you can decrement the returned iterator and then dereference
+      constexpr const_iterator begin () const noexcept;                   // Read-only access to the vector's first element
+      constexpr const_iterator end   () const noexcept;                   // Read-only access to one past the vector's last element.  Never dereference end(), but you can decrement the returned iterator and then dereference
+      constexpr const_iterator cbegin() const noexcept;                   // Read-only access to the vector's first element
+      constexpr const_iterator cend  () const noexcept;                   // Read-only access to one past the vector's last element.  Never dereference end(), but you can decrement the returned iterator and then dereference
 
 
       // Accessors
@@ -385,7 +385,7 @@ namespace CSUF::CPSC131
 
   // begin()
   template <typename T, VectorPolicy POLICY>
-  typename Vector<T, POLICY>::iterator    Vector<T, POLICY>::begin()
+  constexpr typename Vector<T, POLICY>::iterator Vector<T, POLICY>::begin() noexcept
   {
     // access and return pointer-to-array-of-elements held by unique_ptr without changing ownership
     return reinterpret_cast<T *>( _array.get() );                         // Cast pointer-to-uninitialized memory to a pointer-to-T
@@ -396,7 +396,7 @@ namespace CSUF::CPSC131
 
   // end()
   template<typename T, VectorPolicy POLICY>
-  typename Vector<T, POLICY>::iterator    Vector<T, POLICY>::end()
+  constexpr typename Vector<T, POLICY>::iterator Vector<T, POLICY>::end() noexcept
   { return begin() + size(); }                                            // Note the pointer arithmetic used
 
 
@@ -404,7 +404,7 @@ namespace CSUF::CPSC131
 
   // begin() const
   template<typename T, VectorPolicy POLICY>
-  typename Vector<T, POLICY>::const_iterator    Vector<T, POLICY>::begin() const
+  constexpr typename Vector<T, POLICY>::const_iterator Vector<T, POLICY>::begin() const noexcept
   { return const_cast<Vector *>( this )->begin(); }                       // To ensure consistent behavior and to implement the logic in one place, delegate to non-cost version
                                                                           // Can't just return begin(), that'd be an infinite loop
 
@@ -412,7 +412,7 @@ namespace CSUF::CPSC131
 
   // end() const
   template<typename T, VectorPolicy POLICY>
-  typename Vector<T, POLICY>::const_iterator    Vector<T, POLICY>::end() const
+  constexpr typename Vector<T, POLICY>::const_iterator Vector<T, POLICY>::end() const noexcept
   { return const_cast<Vector *>( this )->end(); }                         // To ensure consistent behavior and to implement the logic in one place, delegate to non-cost version
                                                                           // Can't just return end(), that'd be an infinite loop
 
@@ -420,7 +420,7 @@ namespace CSUF::CPSC131
 
   // cbegin() const
   template<typename T, VectorPolicy POLICY>
-  typename Vector<T, POLICY>::const_iterator    Vector<T, POLICY>::cbegin() const
+  constexpr typename Vector<T, POLICY>::const_iterator Vector<T, POLICY>::cbegin() const noexcept
   { return begin(); }                                                     // To ensure consistent behavior and to implement the logic in one place, delegate to begin()
 
 
@@ -428,7 +428,7 @@ namespace CSUF::CPSC131
 
   // cend() const
   template<typename T, VectorPolicy POLICY>
-  typename Vector<T, POLICY>::const_iterator    Vector<T, POLICY>::cend() const
+  constexpr typename Vector<T, POLICY>::const_iterator Vector<T, POLICY>::cend() const noexcept
   { return end(); }                                                       // To ensure consistent behavior and to implement the logic in one place, delegate to end()
 
 
@@ -459,7 +459,7 @@ namespace CSUF::CPSC131
   template <typename T, VectorPolicy POLICY>
   T &   Vector<T, POLICY>::at( std::size_t index )
   {
-    if( index >= _size ) throw std::out_of_range( std::string("index out of bounds:  ") + __FILE__ + " @line " + std::to_string( __LINE__ ) + " in function \"" + __func__ + '"' );   // clang not yet ready for std::source_location
+    if( index >= _size )   throw std::out_of_range( exceptionString( std::format( "index ({}) over indexes vector's size ({})", index, _size ) ) );
 
     return operator[]( index );                                           // To ensure consistent behavior and to implement the logic in one place, delegate to unchecked operator[]
     // could also be coded as:
@@ -556,7 +556,7 @@ namespace CSUF::CPSC131
     // 3      decrement the vector's size
 
 
-    if( position >= end() || position < begin() ) throw std::out_of_range( std::string("iterator out of bounds:  ") + __FILE__ + " @line " + std::to_string( __LINE__ ) + " in function \"" + __func__ + '"' );    // clang not yet ready for std::source_location
+    if( position >= end() || position < begin() )   throw std::out_of_range( exceptionString( "Position outside of bounds of the vector" ) );
 
     // Removes element at "position". Elements from higher positions are shifted back to fill gap. Vector size is decremented.
     //
@@ -648,14 +648,17 @@ namespace CSUF::CPSC131
     // 3      Fill the gap with a copy of the element and increment the vector's size
 
 
-    if( position > end() || position < begin() )   throw std::out_of_range( std::string( "iterator out of bounds:  " ) + __FILE__ + " @line " + std::to_string( __LINE__ ) + " in function \"" + __func__ + '"' );    // clang not yet ready for std::source_location
+    if( position > end() || position < begin() )   throw std::out_of_range( exceptionString( "Position outside of bounds of the vector" ) );
 
     //  if there is insufficient capacity for an additional element
     if( _size >= _capacity )
     {
       // One of the major differences between extendable and fixed capacity vectors is an extendable vector's ability to add
       // capacity when adding an element when no more space (capacity) is available.  Fixed capacity vectors can't do that.
-      if constexpr( POLICY == VectorPolicy::FIXED ) throw std::overflow_error( std::string("insufficient capacity to add another element:  ") + __FILE__ + " @line " + std::to_string( __LINE__ ) + " in function \"" + __func__ + '"' );    // clang not yet ready for std::source_location
+      if constexpr( POLICY == VectorPolicy::FIXED )   throw std::overflow_error( exceptionString( std::format( "Insufficient capacity to add another element\n"
+                                                                                                               "   Size:      {}\n"
+                                                                                                               "   Capacity:  {}",
+                                                                                                               _size, _capacity ) ) );
       else
       {
         // Reserving more capacity (allocating a larger array, moving elements, and then releasing the smaller array) invalidates
@@ -918,7 +921,7 @@ namespace CSUF::CPSC131
 
 
 /***********************************************************************************************************************************
-** (C) Copyright 2023 by Thomas Bettens. All Rights Reserved.
+** (C) Copyright 2025 by Thomas Bettens. All Rights Reserved.
 **
 ** DISCLAIMER: The participating authors at California State University's Computer Science Department have used their best efforts
 ** in preparing this code. These efforts include the development, research, and testing of the theories and programs to determine
@@ -929,10 +932,9 @@ namespace CSUF::CPSC131
 ***********************************************************************************************************************************/
 
 /**************************************************
-** Last modified:  21-OCT-2021  (refactored C++20 workarounds)
-** Last Verified:  03-JAN-2022
-** Last modified:  06-AUG-2023  (Added shift_* and fixed erase bug)
-** Verified with:  MS Visual Studio 2022 Version 17.6.5 (C++20)
-**                 GCC version 13.1.1 20230720 (-std=c++20 ),
-**                 Clang version 16.0.6 (-std=c++20 -stdlib=libc++)
+** Last modified:  08-JUN-2025  (added constexpr and noexcept to iterators)
+** Last Verified:  11-JUN-2025
+** Verified with:  MS Visual Studio 2022 Version 17.14.4,  Compiler Version 19.44.35209 (C++latest)
+**                 GCC version 15.1.0 (-std=c++23 ),
+**                 Clang version 21.0.0 (-std=c++23 -stdlib=libc++)
 ***************************************************/

@@ -7,6 +7,7 @@
 #include <queue>
 #include <stack>
 #include <vector>
+#include <locale>
 
 #include "DoublyLinkedList.hpp"
 #include "SinglyLinkedList.hpp"
@@ -48,18 +49,24 @@ namespace
     c.size();
   };
 
+  template <typename C>
+  concept Stack_or_Queue = is_Stack<C>  ||  is_Queue<C>;
 
 
 
-  template<class Container_Type>   requires is_Stack<Container_Type> || is_Queue<Container_Type>
+  template<Stack_or_Queue Container_Type>
   void demo( Container_Type myContainer )
   {
-    std::cout << "\n\n\nUsing:     " << typeid( myContainer ).name() << '\n'    // some compilers generate more readable results with
-              << "Function:  " << __func__ << "\n\n";                           // type_info::name(), others with __func__.  So let's do them
-                                                                                // both just so we cover our bases
+    std::print( std::cout, "\n\n\n"                         // Programming Note:  Two string literals separated only by white space are concatenated together by the pre-processor
+                           "Using:     {}\n"                // some compilers generate more readable results with
+                           "Function:  {}\n\n",             // type_info::name(), others with __func__.  So let's do them
+                typeid( myContainer ).name(), __func__ );   // both just so we cover our bases
 
-    // A stack is an Abstract Data Type, usually implemented as a limited interlace over some other data structure
-    // Things you can do to a stack:
+
+
+
+    // A stack is an Abstract Data Type, usually implemented as a limited interlace over some other data structure Things you can do
+    // to a stack:
     myContainer.push( {"Tom"    } );
     myContainer.push( {"Aaron"  } );
     myContainer.push( {"Brenda" } );
@@ -67,17 +74,20 @@ namespace
     myContainer.push( {"Katelyn"} );
 
 
-    // Display the contents.  Stacks and queues do not allow traversal (you can't see anything but the top (stack) or the front and back
-    // (queue only), so to display the contents we have to inspect each element at the top and then remove it until the container is
-    // empty.
-    while( !myContainer.empty() )
-    {
-      if constexpr( is_Queue<Container_Type> )   std::cout << myContainer.front() << '\n';
-      else       /* is_Stack<Container_Type> */  std::cout << myContainer.top  () << '\n';
+    // Display the contents.  Stacks and queues do not allow traversal (you can't see anything but the top (stack) or the front and
+    // back (queue only), so to display the contents we have to inspect each element at the top and then remove it until the
+    // container is empty.
+    std::print( std::cout, "{}:  {:n:>}\n\n", ( is_Stack<Container_Type> ? "Stack" : "Queue" ), myContainer );
 
-      myContainer.pop();
+    for( ; !myContainer.empty(); myContainer.pop() )
+    {
+      constexpr auto format_string = " {:>30s}\n";
+      if constexpr( is_Queue<Container_Type> )   std::print( std::cout, format_string, myContainer.front() );
+      else       /* is_Stack<Container_Type> */  std::print( std::cout, format_string, myContainer.top()   );
     }
-    std::cout << '\n';
+    std::println( std::cout );
+
+
   }
 }     // namespace
 
@@ -97,11 +107,13 @@ int main()
 
   try
   {
+    std::locale::global( std::locale( "en_US.UTF-8" ) );
+
     /*******************************************************************************************************************************
     **  STACKS
     *******************************************************************************************************************************/
     /////////////////// Stacks over lists //////////////////////
-    { Stack<Student, SinglyLinkedList<Student>> myStack;   // empty stack where stack is implemented over a singly linked list
+    { Stack<Student, SinglyLinkedList<Student>> myStack;    // empty stack where stack is implemented over a singly linked list
       demo( myStack );
     }
 
@@ -143,10 +155,16 @@ int main()
       demo( myStack );
     }
 
+    //{ Stack<Student, Student[10]> myStack;                // empty stack where queue is implemented over a fixed sized native array
+    //  demo( myStack );                                    // Not yet supported for Stack, see Queue for example
+    //}
+
 
 
     /////////////////// STL Stack Examples //////////////////////
     { std::stack<Student> myStack;                          // default standard stack (uses std::deque as underlying container)
+// #warning "gcc 15.1 does not yet support formatting the adapter containers but expected in 15.2"
+// and MSC++ doesn't support #warning
       demo( myStack );
     }
 
@@ -181,8 +199,7 @@ int main()
 
     // cannot create a queue over a std::forward_list. It does not support pushing to the back in constant time
 
-    {
-      Queue<Student, std::deque<Student>> myQueue;           // empty queue where queue is implemented over standard deque (pronounced "deck"; double ended queue)
+    { Queue<Student, std::deque<Student>> myQueue;           // empty queue where queue is implemented over standard deque (pronounced "deck"; double ended queue)
       demo( myQueue );
     }
 
@@ -219,6 +236,8 @@ int main()
     /////////////////// STL Queue Examples //////////////////////
     // Standard Queue usage with standard containers
     { std::queue<Student> myQueue_5;                        // default standard queue (uses std::deque as underlying container)
+// #warning "gcc 15.1 does not yet support formatting the adapter containers but expected in 15.2"
+// and MSC++ doesn't support #warning
       demo( myQueue_5 );
     }
 

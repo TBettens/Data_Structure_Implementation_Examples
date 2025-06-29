@@ -1,5 +1,8 @@
+#include <format>
 #include <iostream>
 #include <iterator>
+#include <locale>                                                                     // global()
+#include <ranges>                                                                     // reverse
 #include <stdexcept>
 #include <string>
 
@@ -12,6 +15,8 @@ int main()
 {
   try
   {
+    std::locale::global( std::locale( "en_US.UTF-8" ) );
+
     using CSUF::CPSC131::Student;
     using CSUF::CPSC131::DoublyLinkedList;
 
@@ -20,7 +25,7 @@ int main()
     Student s;
     for( int i = 0; i < 5; i++ )
     {
-      s.name( "Student_" + std::to_string(i) );
+      s.name( std::format( "Student_{:02}", i ) );
       s.semesters(2);
       students.push_front(s);
     }
@@ -28,46 +33,56 @@ int main()
     DoublyLinkedList<Student> classRoster( students );
     for( int i = 1; i <= 5; i++ )
     {
-      s.name( "Student_" + std::to_string(i * 10) );
+      s.name( std::format( "Student_{:02}", i*10 ) );
       s.semesters(2);
       classRoster.push_back(s);
     }
 
     students = classRoster;
-    std::cout << "Front and back:\n" << classRoster.front() << classRoster.back() << "\n\n";
+    std::print( std::cout, "Front and back:\n"
+                           "{},   {}\n\n",
+                           classRoster.front(), classRoster.back() );
 
-    std::cout << "Range-based for loop traversal:\n";
-    for( const auto & student : students ) std::cout << student;                    //requires begin() and end() member functions
-    std::cout << "\n\n";
+
+
+    std::print( std::cout, "Range-based for loop traversal:\n"
+                           "{:n:}\n\n",                                                 // requires begin(), end() and operator1= member functions
+                           students );
+
 
     try
     {
-      std::cout << "backward iteration traversal:\n";
-      auto crbegin = std::reverse_iterator( students.cend()   );
-      auto crend   = std::reverse_iterator( students.cbegin() );
-      for( auto i = crbegin; i != crend; ++i ) std::cout << *i;
-      std::cout << "\n\n";                                                            // this looped through a std::forward_list list
+      std::print( std::cout, "Backward traversal with reverse views:\n"                 // may not use reverse iterator member
+                             "{:n:}\n\n",                                               // functions, but instead creates them
+                             students | std::views::reverse );                          // itself using the normal begin() and end()
+                                                                                        // iterator functions
+
+
+
+      std::println( std::cout, "Backward traversal with reverse iterators:");           // explicitly use the reverse iterators
+      for( auto i = students.crbegin(); i != students.crend(); ++i ) std::print( std::cout, "{}, ", *i );
+      std::print( std::cout, "\n\n" );
     }
     catch( std::invalid_argument & ex )
     {
-      std::cerr << "\nReverse iterators can't be used for null-terminated lists because end() returns nullptr, which cannot be decremented\n" << ex.what() << "\n\n";
+      std::print( std::cerr, "\nReverse iterators can't be used for null-terminated DoublyLinkedList because end() returns nullptr, which cannot be decremented\n{}\n\n", ex.what() );
     }
 
     classRoster.insert( std::next( classRoster.begin(), 2 ), Student( "Bob" ) );
 
 
-    std::cout << "Pop until empty traversal:\n";
+    std::println( std::cout, "Backward traversal by popping until empty:");
     while( !students.empty() )
     {
-      std::cout << students.back();
+      std::print( std::cout, "{}, ", students.back() );
       students.pop_back();
     }
-    std::cout << "\n\n";
+    std::print( std::cout, "\n\n" );
   }
 
   catch( std::exception & ex )
   {
-    std::cerr << "Unhandled exception:  " << ex.what() << '\n';
+    std::print( std::cerr, "Unhandled exception:  {}\n", ex.what() );
   }
 }
 

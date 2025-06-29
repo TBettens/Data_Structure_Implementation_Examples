@@ -1,68 +1,87 @@
-#include <iostream>
-#include <stdexcept>
+#include <exception>                                                                            // exception
+#include <format>
+#include <iostream>                                                                             // print(), println(), cout, cerr
+#include <iterator>                                                                             // next()
+#include <locale>                                                                               // global()
+#include <sstream>                                                                              // ostringstream
 #include <string>
-#include <iomanip>
-#include <iterator> // next()
 
 #include "SinglyLinkedList.hpp"
 #include "Student.hpp"
 
 
 
-namespace
+namespace  // unnamed, anonymous namespace
 {
   unsigned          count = 0;
   const std::string banner( 40, '=' );
 
+
+
   void runExtendedInterfaceDriver()
   {
-    CSUF::CPSC131::SinglyLinkedList<std::string> mySll;
-
-    // fill the list with integers with an easily visible order
-    for( auto && i : { "A", "B", "C", "D", "E" } ) mySll.push_back( i );
-
-
-    // Add all the elements in the container (adding two strings concatenates them)
-    std::cout << "\n\n\n\nRecursively add all elements of the list\n"
-              << banner << '\n'
-              << std::setw( 3 ) << ++count << ":  " << "Sum = " << mySll.add() << '\n'
-              << banner << '\n';
+    // Create and fill a list with strings with an easily visible order
+    CSUF::CPSC131::SinglyLinkedList<std::string> mySll{ "A", "B", "C", "D", "E" };
 
 
 
+    // Add up all the elements in the container (adding two strings concatenates them)
+    std::print( std::cout, "\n\n\n\n"
+                           "Recursively add all elements of the list\n"
+                           "{2}\n"
+                           "{0:>3}:  Sum:  {1}\n"
+                           "{2}\n",
+                           ++count, mySll.add(), banner );
+    // Alternative that doesn't require the definition of "banner"
+    // std::print( std::cout, "\n\n\n\n"
+    //                        "Recursively add all elements of the list\n"
+    //                        "{2:=>{3}}\n"
+    //                        "{0:>3}:  Sum = {1:}\n"
+    //                        "{2:=>{3}}\n",
+    //                        ++count, mySll.add(), "", 40 );
 
-    // Reverse the list
-    std::cout << "\n\n\nRecursively reverse the contents of the list\n"
-              << banner << '\n'
-              << std::setw( 3 ) << ++count << ":  Before: ";
-    mySll.forwardPrint();
-    mySll.reverse();
 
-    std::cout << '\n' << std::setw( 3 ) << ++count << ":  After:  ";
-    mySll.forwardPrint();
-    std::cout << '\n' << banner << '\n';
+
+    // Reverse a copy of the list
+    auto myCodpiedSll{ mySll };
+    myCodpiedSll.reverse();
+
+    std::print( std::cout, "\n\n\nRecursively reverse the contents of the list\n"
+                           "{3}\n"
+                           "{0:>3}: Before: {1:n:}\n"
+                           "   " ": After:  {2:n:}\n"
+                           "{3}\n",
+                           ++count, mySll, myCodpiedSll, banner );
 
 
 
 
 
     // Search for a specific value in the list
-    std::cout << "\n\n\nRecursively search the contents of the list for s specific value\n"
-              << banner << '\n'
-              << std::setw( 3 ) << ++count << ":  Element 'B' "
-              << ( mySll.find( "B" ) != mySll.end() ? "was " : "was not " )
-              << "found\n"
-              << banner << '\n';
+    std::print( std::cout, "\n\n\n"
+                           "Recursively search the contents of the list for s specific value\n"
+                           "{2}\n"
+                           "{0:>3}:  Element 'B' {1} found\n"
+                           "{2}\n",
+                           ++count, ( mySll.find( "B" ) != mySll.end() ? "was" : "was not"), banner );
+
+
 
 
     // Print the list backwards
-    std::cout << "\n\n\nPrint the list's contents backwards\n"
-              << banner << '\n'
-              << std::setw( 3 ) << ++count << ":  ";
-    mySll.backwardPrint();
-    std::cout << '\n' << banner << '\n';
+    std::ostringstream forward, backward;
+    mySll.forwardPrint ( forward  );
+    mySll.backwardPrint( backward );
+
+    std::print( std::cout, "\n\n\n"
+                           "Print the list's contents forwards and backwards\n"
+                           "{3}\n"
+                           "{0:>3}:  Forward:    {1}\n"
+                           "   " ":  Backwards:  {2}\n"
+                           "{3}\n",
+                           ++count, forward.str(), backward.str(), banner );
   }
-}    // namespace
+}    // anonymous namespace
 
 
 
@@ -73,6 +92,8 @@ int main()
 {
   try
   {
+    std::locale::global( std::locale( "en_US.UTF-8" ) );
+
     using CSUF::CPSC131::Student;
     using CSUF::CPSC131::SinglyLinkedList;
 
@@ -83,7 +104,7 @@ int main()
     // Insert a few students into the list such that the first one inserted is at the back of the list
     for( int i = 0; i < 5; i++ )
     {
-      students.push_front( Student( "Student_" + std::to_string(i) ) );          // name is "Student_0", "Student_1", "Student_2", etc
+      students.push_front( Student( std::format("Student_{:02}", i) ) );                        // name is "Student_0", "Student_1", "Student_2", etc
     }
 
 
@@ -94,7 +115,7 @@ int main()
     // Now add more students to the class roster at the back of the list (Can't do this with std::forward_list)
     for( int i = 1; i <= 5; i++ )
     {
-      classRoster.push_back( Student("Student_" + std::to_string(i * 10)) );     // name is "Student_10", "Student_20", "Student_30", etc
+      classRoster.push_back( Student( std::format("Student_{:02}", i*10) ) );                   // name is "Student_10", "Student_20", "Student_30", etc
     }
 
 
@@ -102,13 +123,13 @@ int main()
     students = classRoster;
 
     // Display the student at the front and at the back of the class roster
-    std::cout << "Front and back:\n" << classRoster.front() << classRoster.back() << "\n\n";
+    std::print( std::cout, "Front and back:\n  {},  {}\n\n", classRoster.front(), classRoster.back() );
 
 
     // Display all the students in order
     std::cout << "Range-based for loop traversal:\n";
-    for( const auto & student : students ) std::cout << student;                // uses SinglyLinkedList::begin() and SinglyLinkedList::end() member functions
-    std::cout << "\n\n";
+    for( const auto & student : students ) std::print( std::cout, "{}   ", student);            // uses SinglyLinkedList::begin() and SinglyLinkedList::end() member functions
+    std::print( std::cout, "\n\n");
 
 
     // Insert into the middle of the list
@@ -116,10 +137,10 @@ int main()
 
 
     // Remove the student at the front of the list until the list is empty
-    std::cout << "Pop until empty traversal:\n";
+    std::println( std::cout, "Pop until empty traversal:" );
     while( !students.empty() )
     {
-      std::cout << students.front() << '\n';
+      std::print( std::cout, "{}\n", students.front() );
       students.pop_front();
     }
 
@@ -143,4 +164,5 @@ int main()
 // For testing purposes, explicitly instantiate the class template.  Template class member functions are only instantiated, and thus
 // semantically checked by the compiler, when used.  Explicitly instantiating the class forces all the member functions to be
 // instantiated, and thus semantically checked by the compiler.  It enables the compiler to find errors in your code.
-template class CSUF::CPSC131::SinglyLinkedList< int >;
+template class CSUF::CPSC131::SinglyLinkedList<int>;
+template class CSUF::CPSC131::SinglyLinkedList<std::string>;

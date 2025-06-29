@@ -12,12 +12,16 @@
 #pragma once
 #include <compare>                                                                    // week_ordering, strong_quality, compare_weak_order_fallback
 #include <cstddef>                                                                    // size_t, ptrdiff_t
+#include <format>                                                                     // formatter, range_formatter
 #include <initializer_list>                                                           // initializer_list
-#include <iostream>                                                                   // cout
+#include <iostream>                                                                   // cout, ostream
 #include <iterator>                                                                   // forward_iterator_tag, next()
 #include <memory>                                                                     // unique_ptr, make_unique()
-#include <stdexcept>                                                                  // length_error, invalid_argument
+#include <stdexcept>                                                                  // length_error, invalid_argument, logic_error
 #include <utility>                                                                    // swap(), move()
+
+#include "ExceptionString.hpp"
+
 
 
 
@@ -135,20 +139,20 @@ namespace CSUF::CPSC131
 
       // Add a function, named "forwardPrint", to the Singly Linked List that writes the elements to standard output from front to
       // back. The function must be implemented recursively. Assume operator+(lhs, rhs) is defined
-      void forwardPrint() const;
+      void forwardPrint( std::ostream & stream = std::cout ) const;
 
 
       // Add a function, named "backwardPrint", to the Singly Linked List that writes the elements to standard output from back to
       // front. The function must be implemented recursively. Assume operator+(lhs, rhs) is defined
-      void backwardPrint() const;
+      void backwardPrint( std::ostream & stream = std::cout ) const;
 
     private:
       // Extended interface helper functions to demonstrate recursion
-      void     reverse      ( Node * current                  );
-      iterator find         ( Node * current, const T & value );
-      T        add          ( Node * current                  ) const;
-      void     forwardPrint ( Node * current                  ) const;
-      void     backwardPrint( Node * current                  ) const;
+      void     reverse      ( Node * current                        );
+      iterator find         ( Node * current, const T & value       );
+      T        add          ( Node * current                        ) const;
+      void     forwardPrint ( Node * current, std::ostream & stream ) const;
+      void     backwardPrint( Node * current, std::ostream & stream ) const;
   };  // class SinglyLinkedList
 
 
@@ -179,7 +183,15 @@ namespace CSUF::CPSC131
 
 
       // Compiler synthesized constructors and destructor are fine, just what we want (shallow copies, no ownership)
-      Iterator_type(                        ) = delete;                               // Default constructed Iterator_type not allowed - should create end(), if we knew what that was
+
+      // A default constructor should have Sentinel semantics, which is to say it indicates the end of a list.  An iterator default
+      // constructed through the class (i.e., not through a list object) should indicate the end of any list.  This behavior is not
+      // implemented here.  In particular, a default constructed iterator, this case, will not match list.end() if list is
+      // implemented as a circular list.  The Sentinel Design Pattern could be implemented as an enhancement, but I choose to not go
+      // that far primarily for simplicity.  To help prevent misuse of a default constructed iterator, I used to "delete" the
+      // default constructor.  But that stops the list from being recognized by the std::ranges:range concept which in turn prevents
+      // the list from using std::ranges based algorithms, including std::format.
+      Iterator_type(                        );                                        // Default constructed Iterator_type returns a pseudo Sentinel (null pointer in this case)
       Iterator_type( iterator const & other );                                        // Copy constructor when T is non-const, Conversion constructor from non-const to const iterator when T is const
                                                                                       // Note parameter type is intentionally "iterator", not "Iterator_type"
       // Pre and post Increment operators move the position to the next node in the list
@@ -472,7 +484,7 @@ namespace CSUF::CPSC131
   template<typename T>
   T & SinglyLinkedList<T>::front()
   {
-    if( empty() )   throw std::length_error( "empty list" );
+    if( empty() )   throw std::length_error( exceptionString( "empty list" ) );
 
     return *begin();
   }
@@ -500,7 +512,7 @@ namespace CSUF::CPSC131
   template<typename T>
   T & SinglyLinkedList<T>::back()
   {
-    if( empty() )   throw std::length_error( "attempt to access data from an empty list" );
+    if( empty() )   throw std::length_error( exceptionString( "attempt to access data from an empty list" ) );
 
     return self->_tail->_data;
   }
@@ -663,6 +675,19 @@ namespace CSUF::CPSC131
   ** SinglyLinkedList<>::iterator Member Function Definitions
   **
   *********************************************************************************************************************************/
+  // Default constructor - needed to support std::ranges::range concept, but should never be called.
+  //
+  // Let's move the error detection to a linker error instead of a run time error by not providing an definition
+  #if 0
+    template<typename T>   template<typename U>
+    SinglyLinkedList<T>::Iterator_type<U>::Iterator_type()
+    {
+      throw std::logic_error( exceptionString( "CSUF::CPSC131::SinglyLinkedList<T> default constructed (aka Sentinel) iterators not supported" ) );
+    }
+  #endif
+
+
+
 
   // Copy constructor when U is non-const iterator, Conversion constructor from non-const to const iterator when U is a const iterator
   // Type of parameter is intentionally a non-constant iterator
@@ -687,7 +712,7 @@ namespace CSUF::CPSC131
   template<typename T>   template<typename U>
   typename SinglyLinkedList<T>::template Iterator_type<U> &   SinglyLinkedList<T>::Iterator_type<U>::operator++()
   {
-    if( _nodePtr == nullptr )   throw std::invalid_argument( "Attempt to increment null iterator" );
+    if( _nodePtr == nullptr )   throw std::invalid_argument( exceptionString( "Attempt to increment null iterator" ) );
 
     _nodePtr = _nodePtr->_next;
     return *this;
@@ -712,7 +737,7 @@ namespace CSUF::CPSC131
   template<typename T>   template<typename U>
   typename SinglyLinkedList<T>::template Iterator_type<U>::reference   SinglyLinkedList<T>::Iterator_type<U>::operator*() const
   {
-    if( _nodePtr == nullptr )   throw std::invalid_argument( "Attempt to dereference null iterator" );
+    if( _nodePtr == nullptr )   throw std::invalid_argument( exceptionString( "Attempt to dereference null iterator" ) );
 
     return _nodePtr->_data;
   }
@@ -724,7 +749,7 @@ namespace CSUF::CPSC131
   template<typename T>   template<typename U>
   typename SinglyLinkedList<T>::template Iterator_type<U>::pointer   SinglyLinkedList<T>::Iterator_type<U>::operator->() const
   {
-    if( _nodePtr == nullptr )  throw std::invalid_argument( "Attempt to dereference null iterator" );
+    if( _nodePtr == nullptr )  throw std::invalid_argument( exceptionString( "Attempt to dereference null iterator" ) );
 
     return &(_nodePtr->_data);
   }
@@ -855,26 +880,26 @@ namespace CSUF::CPSC131
   ///////////////////  Forward Print  ///////////////////////
   // Client facing public function
   template<typename T>
-  void SinglyLinkedList<T>::forwardPrint() const
+  void SinglyLinkedList<T>::forwardPrint( std::ostream & stream ) const
   {
-    forwardPrint( self->_head );                                                      // Kick off the recursion starting at the head. Note the call to the overloaded, private forwardPrint function
+    forwardPrint( self->_head, stream );                                                      // Kick off the recursion starting at the head. Note the call to the overloaded, private forwardPrint function
   }
 
 
 
   // The private helper function
   template<typename T>
-  void SinglyLinkedList<T>::forwardPrint( Node * current ) const
+  void SinglyLinkedList<T>::forwardPrint( Node * current, std::ostream & stream ) const
   {
     // Base Case - reached the end of the list
     if( end() == current )   return;
 
     // Visit - print the contents
-    std::cout << current->_data;
-    if( end() != current->_next )   std::cout << ", ";
+    stream << current->_data;
+    if( end() != current->_next )   stream << ", ";
 
     // Recurse - print a smaller list
-    forwardPrint( current->_next );
+    forwardPrint( current->_next, stream );
   }
 
 
@@ -885,26 +910,26 @@ namespace CSUF::CPSC131
   ///////////////////  Backward Print  ///////////////////////
   // Client facing public function
   template<typename T>
-  void SinglyLinkedList<T>::backwardPrint() const
+  void SinglyLinkedList<T>::backwardPrint( std::ostream & stream ) const
   {
-    backwardPrint( self->_head );                                                     // Kick off the recursion starting at the head. Note the call to the overloaded, private backwardPrint function
+    backwardPrint( self->_head, stream );                                                     // Kick off the recursion starting at the head. Note the call to the overloaded, private backwardPrint function
   }
 
 
 
   // The private helper function
   template<typename T>
-  void SinglyLinkedList<T>::backwardPrint( Node * current ) const
+  void SinglyLinkedList<T>::backwardPrint( Node * current, std::ostream & stream ) const
   {
     // Base Case - reached the end of the list
     if( end() == current )   return;
 
     // Recurse - print a smaller list
-    backwardPrint( current->_next );
+    backwardPrint( current->_next, stream );
 
     // Visit - print the contents
-    if( end() != current->_next )   std::cout << ", ";
-    std::cout << current->_data;
+    if( end() != current->_next )   stream << ", ";
+    stream << current->_data;
   }
 }    // namespace CSUF::CPSC131
 
@@ -969,25 +994,20 @@ namespace CSUF::CPSC131
 
 
 /***********************************************************************************************************************************
-** (C) Copyright 2022 by Thomas Bettens. All Rights Reserved.
+** (C) Copyright 2025 by Thomas Bettens. All Rights Reserved.
 **
-** DISCLAIMER: The participating authors at California State University's
-*Computer Science Department have used their best efforts
-** in preparing this code. These efforts include the development, research, and
-*testing of the theories and programs to determine
-** their effectiveness. The authors make no warranty of any kind, expressed or
-*implied, with regard to these programs or to the
-** documentation contained within. The authors shall not be liable in any event
-*for incidental or consequential damages in
-** connection with, or arising out of, the furnishing, performance, or use of
-*these libraries and programs.  Distribution without
+** DISCLAIMER: The participating authors at California State University's Computer Science Department have used their best efforts
+** in preparing this code. These efforts include the development, research, and testing of the theories and programs to determine
+** their effectiveness. The authors make no warranty of any kind, expressed or implied, with regard to these programs or to the
+** documentation contained within. The authors shall not be liable in any event for incidental or consequential damages in
+** connection with, or arising out of, the furnishing, performance, or use of these libraries and programs.  Distribution without
 ** written consent from the authors is prohibited.
 ***********************************************************************************************************************************/
 
 /**************************************************
-** Last modified:  03-JAN-2022
-** Last Verified:  03-JAN-2022
-** Verified with:  MS Visual Studio 2019 Version 16.11.8 (C++20)
-**                 GCC version 11.2.1 20211124 (-std=c++20 ),
-**                 Clang version 13.0.0 (-std=c++20 -stdlib=libc++)
+** Last modified:  12-JUN-2025  (changed Iterator_type's default constructor from deleted to not implemented to be range compliant)
+** Last Verified:  12-JUN-2025
+** Verified with:  MS Visual Studio 2022 Version 17.14.4,  Compiler Version 19.44.35209 (C++latest)
+**                 GCC version 15.1.0 (-std=c++23 ),
+**                 Clang version 21.0.0 (-std=c++23 -stdlib=libc++)
 ***************************************************/
