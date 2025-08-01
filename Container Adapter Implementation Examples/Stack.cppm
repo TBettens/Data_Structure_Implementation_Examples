@@ -6,24 +6,30 @@
 **  The Stack ADT's interface is a small subset of std::stack defined at https://en.cppreference.com/w/cpp/container/stack
 **
 ***********************************************************************************************************************************/
-#pragma once
-
-#include <array>
-#include <stdexcept>                                              // out_of_range
-#include <format>                                                 // format, formatter, range_formatter
-#include <cstddef>                                                // size_t
-#include <iterator>                                               // distance()
-#include <ranges>                                                 // view::reverse, view::take
-#include <string>                                                 // to_string()
-
-#include "ExceptionString.hpp"
-#include "Vector.hpp"
+module;                                                                               // Global fragment (not part of the module)
+  // should be removed when #include "adapter_container_formatting_patch.inc" below is removed
+  #include <version>
 
 
 
 
 
-namespace CSUF::CPSC131
+
+
+
+
+/***********************************************************************************************************************************
+**  Module CSUF.CPSC131.Stack Interface
+**
+***********************************************************************************************************************************/
+export module CSUF.CPSC131.Stack;
+import std;
+import CSUF.CPSC131.exceptionString;
+import CSUF.CPSC131.Vector;
+
+
+
+export namespace CSUF::CPSC131
 {
   /*********************************************************************************************************************************
   ** Primary Class Definition
@@ -44,7 +50,7 @@ namespace CSUF::CPSC131
   template<typename T, class UnderlyingContainer = CSUF::CPSC131::Vector<T>>
   class Stack
   {
-    friend struct std::formatter<Stack<T, UnderlyingContainer>>;  // Grant access to the formatter specialization.
+    friend struct std::formatter<Stack<T, UnderlyingContainer>>;                      // Grant access to the formatter specialization.
 
     public:
       // Constructors, destructor, and assignments
@@ -52,26 +58,26 @@ namespace CSUF::CPSC131
 
 
       // Queries
-      bool        empty() const noexcept;                         // returns true if the stack contains no elements, false otherwise
-      std::size_t size () const noexcept;                         // returns the number of elements in the stack
+      bool        empty() const noexcept;                                             // returns true if the stack contains no elements, false otherwise
+      std::size_t size () const noexcept;                                             // returns the number of elements in the stack
 
 
       // Accessors
-      T const & top() const;                                      // returns a read only reference to the top of the stack
-      T       & top();                                            // returns a read-write reference to the top of the stack
+      T const & top() const;                                                          // returns a read only reference to the top of the stack
+      T       & top();                                                                // returns a read-write reference to the top of the stack
 
 
       // Modifiers
-      void   push( T const & value );                             // puts the value at the top of the stack and increments size
-      void   pop (                 );                             // removes the element at the top of the stack and decrements size
+      void   push( T const & value );                                                 // puts the value at the top of the stack and increments size
+      void   pop (                 );                                                 // removes the element at the top of the stack and decrements size
 
 
       // Relational Operators
-      bool operator==( Stack const & rhs ) const = default;       // returns true if this stack and the rhs stack have the same number of values in the same order, false otherwise
-                                                                  // delegates to underlying container;  ordering not supported
+      bool operator==( Stack const & rhs ) const = default;                           // returns true if this stack and the rhs stack have the same number of values in the same order, false otherwise
+                                                                                      // delegates to underlying container;  ordering not supported
 
     private:
-      UnderlyingContainer  _collection;                           // delegate object management
+      UnderlyingContainer  _collection;                                               // delegate object management
   };
 
 
@@ -97,7 +103,7 @@ namespace CSUF::CPSC131
   template<typename T, std::size_t CAPACITY>
   class Stack<T, std::array<T, CAPACITY>>
   {
-    friend struct std::formatter<Stack<T, std::array<T, CAPACITY>>>;    // Grant access to the formatter specialization.
+    friend struct std::formatter<Stack<T, std::array<T, CAPACITY>>>;                  // Grant access to the formatter specialization.
 
     public:
       // Constructors, destructor, and assignments
@@ -105,36 +111,39 @@ namespace CSUF::CPSC131
 
 
       // Queries
-      bool        empty() const noexcept;                         // returns true if the stack contains no elements, false otherwise
-      std::size_t size () const noexcept;                         // returns the number of elements in the stack
+      bool        empty() const noexcept;                                             // returns true if the stack contains no elements, false otherwise
+      std::size_t size () const noexcept;                                             // returns the number of elements in the stack
 
 
       // Accessors
-      T const & top() const;                                      // returns a read only reference to the top of the stack
-      T       & top();                                            // returns a read-write reference to the top of the stack
+      T const & top() const;                                                          // returns a read only reference to the top of the stack
+      T       & top();                                                                // returns a read-write reference to the top of the stack
 
 
       // Modifiers
-      void   push( T const & value );                             // puts the value at the top of the stack and increments size
-      void   pop (                 );                             // removes the element at the top of the stack and decrements size
+      void   push( T const & value );                                                 // puts the value at the top of the stack and increments size
+      void   pop (                 );                                                 // removes the element at the top of the stack and decrements size
 
 
       // Relational Operators
-      bool operator==( Stack const & rhs ) const;                 // returns true if this stack and the rhs stack have the same number of values in the same order, false otherwise
-                                                                  // ordering not supported
+      bool operator==( Stack const & rhs ) const;                                     // returns true if this stack and the rhs stack have the same number of values in the same order, false otherwise
+                                                                                      // ordering not supported
 
 
     private:
       // Since the "array" structure has, by definition, fixed size and capacity, it's not possible to delegate all the object
       // management responsibilities as was done above. An attribute has been added to maintain the number of elements the client
       // has placed the stack.
-      std::size_t             _size = 0;                          // The number of elements in the stack, 0 indicates an empty container
-      std::size_t &           _top  = _size;                      // There is just one attribute, call it size or top.  It's the same thing.
-                                                                  // There is nothing in the slot indexed by Size/Top, so don't use it to retrieve data
-                                                                  // Size/Top represents the next slot in the array to fill
+      std::size_t             _size = 0;                                              // The number of elements in the stack, 0 indicates an empty container
+      std::size_t &           _top  = _size;                                          // There is just one attribute, call it size or top.  It's the same thing.
+                                                                                      // There is nothing in the slot indexed by Size/Top, so don't use it to retrieve data
+                                                                                      // Size/Top represents the next slot in the array to fill
       std::array<T, CAPACITY> _collection;
   };
-}  // namespace CSUF::CPSC131
+}  // export namespace CSUF::CPSC131
+
+
+#include "adapter_container_formatting_patch.inc"
 
 
 
@@ -150,39 +159,32 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
+// Not exported but reachable
+/***********************************************************************************************************************************
+************************************************************************************************************************************
+** Template Implementation
+*
+** Separating Interface from Implementation is an extremely important concept I hope students will come to appreciate.
+************************************************************************************************************************************
+***********************************************************************************************************************************/
 namespace CSUF::CPSC131
 {
-  #ifndef CSUF_CPSC131_STACK_HELPER_CONCEPTS
-  #define CSUF_CPSC131_STACK_HELPER_CONCEPTS
-    // Stack helper concepts used to select which end of the underlying container to use.  You have to push and pop from the same
-    // end, but which end makes a difference.  Using the wrong end of the container could result in a linear-time (O(n)) operation
-    // instead of the required constant-time (O(1)) operation.
-    template <typename Container>
-    concept is_front_insertable = requires(Container c)
-    { // all are required
-      c.push_front( c.front() );
-      c.pop_front();
-      c.front();
-    };
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Concepts
+  //
+  // Stack helper concepts used to select which end of the underlying container to use.  You have to push and pop from the same
+  // end, but which end makes a difference.  Using the wrong end of the container could result in a linear-time (O(n)) operation
+  // instead of the required constant-time (O(1)) operation.
+  template <typename Container>
+  concept is_front_insertable = requires(Container c)
+  { // all are required
+    c.push_front( c.front() );
+    c.pop_front();
+    c.front();
+  };
 
-    template <typename Container>
-    concept has_size = requires(Container c) {c.size();};
-  #endif
-
-
-
-
-
-
-
-
-
-
-
-
+  template <typename Container>
+  concept has_size = requires(Container c) {c.size();};
 
 
 
@@ -208,9 +210,6 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
   // pop()
   template<typename T, class UnderlyingContainer>
   void Stack<T, UnderlyingContainer>::pop()
@@ -225,18 +224,10 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
   // top() const
   template<typename T, class UnderlyingContainer>
   const T & Stack<T, UnderlyingContainer>::top() const
-  {
-    return const_cast<Stack<T, UnderlyingContainer> *>(this)->top();                            // delegate to the read-write version of Stack::top
-  }
-
-
-
+  { return const_cast<Stack<T, UnderlyingContainer> *>(this)->top(); }                          // delegate to the read-write version of Stack::top
 
 
 
@@ -252,16 +243,10 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
   // empty() const
   template<typename T, class UnderlyingContainer>
   bool Stack<T, UnderlyingContainer>::empty() const noexcept
   { return _collection.empty(); }
-
-
-
 
 
 
@@ -273,9 +258,6 @@ namespace CSUF::CPSC131
     if constexpr( has_size<UnderlyingContainer> )    return _collection.size();                                              // typically, everything but std::forward_list
     else                                             return std::distance( _collection.begin(), _collection.end() );         // typically, std::forward_list
   }
-
-
-
 
 
 
@@ -326,9 +308,6 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
   // pop()
   template<typename T, std::size_t CAPACITY>
   void Stack<T, std::array<T, CAPACITY>>::pop()
@@ -360,18 +339,12 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
   // top() const
   template<typename T, std::size_t CAPACITY>
   const T & Stack<T, std::array<T, CAPACITY>>::top() const
   {
-    return const_cast<Stack<T, std::array<T, CAPACITY>> *>(this)->top();  // delegate to the read-write version of top
+    return const_cast<Stack<T, std::array<T, CAPACITY>> *>(this)->top();              // delegate to the read-write version of top
   }
-
-
-
 
 
 
@@ -388,9 +361,6 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
   // empty() const
   template<typename T, std::size_t CAPACITY>
   bool Stack<T, std::array<T, CAPACITY>>::empty() const noexcept
@@ -398,16 +368,10 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
   // size() const
   template<typename T, std::size_t CAPACITY>
   std::size_t Stack<T, std::array<T, CAPACITY>>::size() const noexcept
   { return _size; }
-
-
-
 
 
 
@@ -421,9 +385,6 @@ namespace CSUF::CPSC131
     return true;
   }
 }    // namespace CSUF::CPSC131
-
-
-
 
 
 
@@ -473,9 +434,6 @@ struct std::formatter<CSUF::CPSC131::Stack<T, UnderlyingContainer>> : std::range
 
 
 
-
-
-
 /***********************************************************************************************************************************
 ** (C) Copyright 2025 by Thomas Bettens. All Rights Reserved.
 **
@@ -488,9 +446,11 @@ struct std::formatter<CSUF::CPSC131::Stack<T, UnderlyingContainer>> : std::range
 ***********************************************************************************************************************************/
 
 /**************************************************
-** Last modified:  14-JUN-2025
-** Last Verified:  29-JUN-2025
-** Verified with:  MS Visual Studio 2022 Version 17.14.4,  Compiler Version 19.44.35209 (C++latest)
-**                 GCC version 15.1.1 (-std=c++23 ),
+** Last modified:  27-JUL-2025 (Converted to C++ Modules)
+** Last Verified:  27-JUL-2025
+** Verified with:  !!MS Visual Studio 2022 Version 17.14.9,  Compiler Version 19.44.35213 (/std:c++latest)
+**                   - Link error: invalid or corrupt file: duplicate COMDAT '...'
+**                     names too long
+**                 GCC version 15.1.0 (-std=c++23 )
 **                 Clang version 21.0.0 (-std=c++23 -stdlib=libc++)
 ***************************************************/

@@ -7,27 +7,32 @@
 **  Major differences between this example and std::map. Unlike std:map:
 **  1)  end() and rend() cannot be decremented
 ***********************************************************************************************************************************/
-#pragma once
-#include <algorithm>                                                                  // max(), swap()
-#include <compare>                                                                    // week_ordering, strong_quality, compare_weak_order_fallback
-#include <cstddef>                                                                    // size_t, ptrdiff_t
-#include <initializer_list>                                                           // initializer_list
-#include <iostream>                                                                   // ostream, print()
-#include <iterator>                                                                   // next(), bidirectional_iterator_tag
-#include <stdexcept>                                                                  // out_of_range, length_error, logic_error
-#include <utility>                                                                    // pair, move()
-
-#include "ExceptionString.hpp"
+module;                                                                               // Global fragment (not part of the module)
+  // Empty
 
 
+
+
+
+
+
+
+
+/***********************************************************************************************************************************
+**  Module CSUF.CPSC131.BinarySearchTree Interface
+**
+***********************************************************************************************************************************/
+export module CSUF.CPSC131.BinarySearchTree;                                          // Primary Module Interface Definition
+import std;
+import CSUF.CPSC131.exceptionString;
 
 
 
 /*******************************************************************************
-**  Binary Search Tree Abstract Data Type Definition (Duplicate keys allowed)
+**  Module CSUF.CPSC131.BinarySearchTree Interface (Duplicate keys not allowed)
 **
 *******************************************************************************/
-namespace CSUF::CPSC131
+export namespace CSUF::CPSC131
 {
   // Template Class Definition
   template <typename Key, typename Value>
@@ -51,6 +56,7 @@ namespace CSUF::CPSC131
       using const_iterator = Iterator_type <KeyValue_Pair const>;                     // A bi-directional iterator to a read-only value in the tree
 
 
+
       // Constructors, destructor, and assignments
       BinarySearchTree(                                                   );          // Default constructor, creates an empty tree
       BinarySearchTree( BinarySearchTree const                & original  );          // Copy constructor, performs a deep copy
@@ -61,10 +67,13 @@ namespace CSUF::CPSC131
       BinarySearchTree & operator=( BinarySearchTree const  & rhs );                  // Copy assignment, performs a deep copy
       BinarySearchTree & operator=( BinarySearchTree       && rhs ) noexcept;         // Move assignment, takes ownership of the other tree
 
+
+
       // Queries
       std::size_t size    (                 ) const noexcept;                         // Returns the number of elements in the tree
       bool        empty   (                 ) const noexcept;                         // Returns true if the tree contains no elements, false otherwise
       bool        contains( Key const & key ) const;                                  // Returns true if there is such an element, false otherwise
+
 
 
       // Iterators
@@ -78,6 +87,7 @@ namespace CSUF::CPSC131
       const_iterator cend           () const noexcept;                                // Returns a read-only iterator beyond the tree's last (greatest) element.  Do not dereference this Iterator
 
 
+
       // Accessors
       Value const    & at        ( Key const & key ) const;                           // Returns the value associated with given key.  Throws std::out_of_range if key not found
       Value          & at        ( Key const & key );                                 // Returns the value associated with given key.  Throws std::out_of_range if key not found
@@ -86,11 +96,13 @@ namespace CSUF::CPSC131
       iterator         find      ( Key const & key );                                 // Returns a read-write iterator to the key/value pair associated with the key, end() if key not found
 
 
+
       // Modifiers
       std::pair<iterator, bool> insert( KeyValue_Pair const & pair     );             // Inserts a key-value pair into the container, if the container doesn't already contain an element with an equivalent key.
       std::size_t               erase ( Key           const & key      );             // Removes the matching node and returns the number of elements removed (0 or 1)
       iterator                  erase ( const_iterator        position );             // Removes the pointed-to node and returns the iterator following the removed element
       void                      clear (                                );             // Returns the tree to an empty state releasing all nodes
+
 
 
       // Relational Operators
@@ -103,9 +115,13 @@ namespace CSUF::CPSC131
       // Private Types
       struct Node;
 
+
+
       // Member instance attributes
       Node *      _root = nullptr;
       std::size_t _size = 0;
+
+
 
       // Helper functions
       bool   isBalanced  ( Node * current       ) const;
@@ -115,7 +131,6 @@ namespace CSUF::CPSC131
       Node * makeCopy    ( Node * current       );
       void   updateHeight( Node * current       );
       void   clear       ( Node * current       );
-
 
 
 
@@ -133,6 +148,7 @@ namespace CSUF::CPSC131
       Value         getSum      (                    ) const;
 
 
+
     private:
       // Private extended interface helper functions to demonstrate recursion
       long long int getHeight   ( Node * current ) const;
@@ -146,14 +162,10 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
-
   /*******************************************************************************
   ** Class BinarySearchTree<Key, Value>::Iterator - A bi-directional iterator
   **
- *******************************************************************************/
+   *******************************************************************************/
   template<typename Key, typename Value>  template<typename U>
   class BinarySearchTree<Key, Value>::Iterator_type
   {
@@ -168,36 +180,49 @@ namespace CSUF::CPSC131
       using reference         = value_type &;
 
 
+
       // Compiler synthesized constructors and destructor are fine, just what we want (shallow copies, no ownership) but needed to
       // explicitly say that because there is also a user defined constructor
       Iterator_type(                        );                                        // Default constructed Iterator_type returns a pseudo Sentinel (null pointer in this case)
       Iterator_type( iterator const & other ) noexcept;                               // Copy constructor when U is non-const, Conversion constructor from non-const to const iterator when U is const
                                                                                       // Note parameter type is intentionally "iterator", not "Iterator_type"
+
+
       // Pre and post Increment operators move the position to the next node in the list
       Iterator_type & operator++();                                                   // advance the iterator one node in-order (pre -increment)
       Iterator_type   operator++( int );                                              // advance the iterator one node in-order (post-increment)
 
+
+
       // Pre and post Decrement operators move the position to the previous node in the list
       Iterator_type & operator--();                                                   // retreat the iterator one node in-order (pre -decrement)
       Iterator_type   operator--( int );                                              // retreat the iterator one node in-order (post-decrement)
+
+
 
       // Dereferencing and member access operators provide access to data. The iterator itself can be constant or non-constant, but,
       // by definition, points to a non-constant linked list.
       reference operator* () const;
       pointer   operator->() const;
 
+
+
       // Equality operators
       bool operator==( Iterator_type const & rhs ) const;                             // Symmetrically compares all const & non-const iterator combinations, with the help of the Conversion constructor above
+
+
 
     private:
       // Member attributes
       Node * _nodePtr = nullptr;
 
+
+
       // Helper functions
       Iterator_type( Node * position ) noexcept;                                      // Implicit conversion constructor from pointer-to-Node to iterator-to-Node
   };  // BinarySearchTree<U>::Iterator_type
 
-}    // namespace CSUF::CPSC131
+}    // export namespace CSUF::CPSC131
 
 
 
@@ -213,13 +238,15 @@ namespace CSUF::CPSC131
 
 
 
+// Not exported but reachable
 /***********************************************************************************************************************************
 ************************************************************************************************************************************
-** Private Implementation
-**
+** Template Implementation
+*
 ** Separating Interface from Implementation is an extremely important concept I hope students will come to appreciate.
 ************************************************************************************************************************************
 ***********************************************************************************************************************************/
+
 /************************************************************************************************************************************************************************************************************
 ** Class BinarySearchTree - a very basic example implementation of the Binary Search Tree Abstract Data Type
 **
@@ -268,9 +295,10 @@ namespace CSUF::CPSC131
 
 namespace CSUF::CPSC131
 {
-  /*****************************************************************************
-  ** A Binary Search Tree node
-  *****************************************************************************/
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // A Binary Search Tree node
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
   template<typename Key, typename Value>
   struct BinarySearchTree<Key, Value>::Node
   {
@@ -294,11 +322,6 @@ namespace CSUF::CPSC131
     Key const & key  () { return _pair.first;  }
     Value     & value() { return _pair.second; }
   };
-
-
-
-
-
 
 
 
@@ -391,14 +414,6 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
-
-
-
-
-
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Queries
   //
@@ -424,14 +439,6 @@ namespace CSUF::CPSC131
   template<typename Key, typename Value>
   bool BinarySearchTree<Key, Value>::contains( const Key & key ) const
   { return find( key ) != end(); }
-
-
-
-
-
-
-
-
 
 
 
@@ -491,14 +498,6 @@ namespace CSUF::CPSC131
   template<typename Key, typename Value>
   typename BinarySearchTree<Key, Value>::const_iterator BinarySearchTree<Key, Value>::cend() const noexcept
   { return const_cast<BinarySearchTree &>( *this ).end(); }                           // to ensure consistent behavior and to implement the logic in one place, delegate to non-cost version
-
-
-
-
-
-
-
-
 
 
 
@@ -573,14 +572,6 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
-
-
-
-
-
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Modifiers
   //
@@ -643,9 +634,6 @@ namespace CSUF::CPSC131
     // return the added node and indicate something was added to the tree
     return { newNode, true };
   }
-
-
-
 
 
 
@@ -743,14 +731,6 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
-
-
-
-
-
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Relational Operators
   //
@@ -785,14 +765,6 @@ namespace CSUF::CPSC131
 
     return true;
   }
-
-
-
-
-
-
-
-
 
 
 
@@ -1089,14 +1061,6 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
-
-
-
-
-
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   // Non-member functions
   //
@@ -1257,10 +1221,6 @@ namespace CSUF::CPSC131
   template<typename Key, typename Value>  template<typename U>
   bool BinarySearchTree<Key, Value>::Iterator_type<U>::operator==( const Iterator_type & rhs ) const
   { return _nodePtr == rhs._nodePtr; }
-
-
-
-
 
 
 
@@ -1432,6 +1392,14 @@ namespace CSUF::CPSC131
 
 
 
+
+
+
+
+
+
+
+
 /***********************************************************************************************************************************
 ** (C) Copyright 2022 by Thomas Bettens. All Rights Reserved.
 **
@@ -1444,9 +1412,9 @@ namespace CSUF::CPSC131
 ***********************************************************************************************************************************/
 
 /**************************************************
-** Last modified:  03-JAN-2022
-** Last Verified:  03-JAN-2022
-** Verified with:  MS Visual Studio 2019 Version 16.11.8 (C++20)
-**                 GCC version 11.2.1 20211124 (-std=c++20 ),
-**                 Clang version 13.0.0 (-std=c++20 -stdlib=libc++)
+** Last modified:  27-JUL-2025 (Converted to C++ Modules)
+** Last Verified:  27-JUL-2025
+** Verified with:  MS Visual Studio 2022 Version 17.14.9,  Compiler Version 19.44.35213 (/std:c++latest)
+**                 GCC version 15.1.0 (-std=c++23 )
+**                 Clang version 21.0.0 (-std=c++23 -stdlib=libc++)
 ***************************************************/

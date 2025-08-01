@@ -1,13 +1,6 @@
-#include <format>
-#include <iostream>
-#include <iterator>
-#include <locale>                                                                     // global()
-#include <ranges>                                                                     // reverse
-#include <stdexcept>
-#include <string>
-
-#include "DoublyLinkedList.hpp"
-#include "Student.hpp"
+import std;
+import CSUF.CPSC131.Student;
+import CSUF.CPSC131.DoublyLinkedList;
 
 
 
@@ -89,4 +82,10 @@ int main()
 // For testing purposes, explicitly instantiate the class template.  Template class member functions are only instantiated, and thus
 // semantically checked by the compiler, when used.  Explicitly instantiating the class forces all the member functions to be
 // instantiated, and thus semantically checked by the compiler.  It enables the compiler to find errors in your code.
-template class CSUF::CPSC131::DoublyLinkedList<CSUF::CPSC131::Student>;
+template class CSUF::CPSC131::DoublyLinkedList<CSUF::CPSC131::Student, CSUF::CPSC131::DllPolicy::CIRCULAR>;
+template class CSUF::CPSC131::DoublyLinkedList<int,                    CSUF::CPSC131::DllPolicy::CIRCULAR>;
+template class CSUF::CPSC131::DoublyLinkedList<std::string,            CSUF::CPSC131::DllPolicy::CIRCULAR>;
+
+template class CSUF::CPSC131::DoublyLinkedList<CSUF::CPSC131::Student, CSUF::CPSC131::DllPolicy::NTL>;
+template class CSUF::CPSC131::DoublyLinkedList<int,                    CSUF::CPSC131::DllPolicy::NTL>;
+template class CSUF::CPSC131::DoublyLinkedList<std::string,            CSUF::CPSC131::DllPolicy::NTL>;

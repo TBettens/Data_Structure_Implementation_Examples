@@ -1,24 +1,30 @@
 /***********************************************************************************************************************************
 ** Common class and functions used in the CSUF 131 Implementation Examples
 ***********************************************************************************************************************************/
-#pragma once
+module;                                                                               // Global fragment (not part of the module)
+  #include <version>                                                                  // defines feature-test macros, __cpp_lib_stacktrace, __cpp_lib_formatters
 
-#include <format>                                                           // format()
-#include <source_location>                                                  // source_location, current()
-#include <string>                                                           // string
-#include <string_view>                                                      // string_view
 
-#include <version>                                                          // defines feature-test macros, __cpp_lib_stacktrace
-#if defined( __cpp_lib_stacktrace )                                         // Clang 21 does not yet support std::stacktrace.
-  #include <stacktrace>                                                     // stacktrace
-#endif
 
-namespace CSUF::CPSC131
+
+
+
+
+
+/***********************************************************************************************************************************
+**  Module CSUF.CPSC131.exceptionString Interface
+**
+***********************************************************************************************************************************/
+export module CSUF.CPSC131.exceptionString;                                           // Primary Module Interface Definition
+import std;
+
+
+export namespace CSUF::CPSC131
 {
   // Usage:  exceptionString( "your message" );
-  //         Let the second paramter default to the current source code location.  It would be unusual to provide anything different.
+  //         Let the second parameter default to the current source code location.  It would be unusual to provide anything different.
   //         The default location is captured at the call site, not here.
-  std::string exceptionString( const std::string_view message, const std::source_location location = std::source_location::current() )
+  inline std::string exceptionString( const std::string_view message, const std::source_location location = std::source_location::current() )
   {
     return std::format( "{}\n detected in function \"{}\"\n"
                         " at line {}\n"
@@ -30,8 +36,8 @@ namespace CSUF::CPSC131
                         message,
                         location.function_name(), location.line(), location.file_name(),
 
-                        #ifdef __cpp_lib_stacktrace
-                          std::stacktrace::current( 1 )                     // Let's not show this function in the trace, so skip 1
+                        #if defined( __cpp_lib_stacktrace ) && defined( __cpp_lib_formatters )
+                          std::stacktrace::current( 1 )                               // Let's not show this function in the trace, so skip 1
                         #else
                           "  Stack trace not available"
                         #endif
@@ -62,9 +68,9 @@ namespace CSUF::CPSC131
 ***********************************************************************************************************************************/
 
 /**************************************************
-** Last modified:  08-JUN-2025  (added constexpr and noexcept to iterators)
-** Last Verified:  11-JUN-2025
-** Verified with:  MS Visual Studio 2022 Version 17.14.4,  Compiler Version 19.44.35209 (C++latest)
-**                 GCC version 15.1.0 (-std=c++23 ),
+** Last modified:  27-JUL-2025 (Converted to C++ Modules)
+** Last Verified:  27-JUL-2025
+** Verified with:  MS Visual Studio 2022 Version 17.14.9,  Compiler Version 19.44.35213 (/std:c++latest)
+**                 GCC version 15.1.0 (-std=c++23 )
 **                 Clang version 21.0.0 (-std=c++23 -stdlib=libc++)
 ***************************************************/

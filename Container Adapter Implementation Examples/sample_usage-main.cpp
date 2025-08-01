@@ -1,20 +1,11 @@
-#include <array>
-#include <deque>
-#include <exception>
-#include <forward_list>
-#include <iostream>
-#include <list>
-#include <queue>
-#include <stack>
-#include <vector>
-#include <locale>
+import std;
+import CSUF.CPSC131.DoublyLinkedList;
+import CSUF.CPSC131.Stack;
+import CSUF.CPSC131.Queue;
+import CSUF.CPSC131.SinglyLinkedList;
+import CSUF.CPSC131.Student;
+import CSUF.CPSC131.Vector;
 
-#include "DoublyLinkedList.hpp"
-#include "SinglyLinkedList.hpp"
-#include "Vector.hpp"
-#include "Student.hpp"
-#include "Stack.hpp"
-#include "Queue.hpp"
 
 
 
@@ -57,6 +48,12 @@ namespace
   template<Stack_or_Queue Container_Type>
   void demo( Container_Type myContainer )
   {
+    // std::type_info::name
+    // Some implementations (such as MSVC, IBM, Oracle) produce a human-readable type name. Others, most notably gcc and clang,
+    // return the mangled name, which is specified by the Itanium C++ ABI. The mangled name can be converted to human-readable form
+    // using implementation-specific API such as abi::__cxa_demangle directly or through boost::core::demangle. It can also be piped
+    // through the command-line utility c++filt -t.
+    // https://en.cppreference.com/w/cpp/types/type_info/name.html
     std::print( std::cout, "\n\n\n"                         // Programming Note:  Two string literals separated only by white space are concatenated together by the pre-processor
                            "Using:     {}\n"                // some compilers generate more readable results with
                            "Function:  {}\n\n",             // type_info::name(), others with __func__.  So let's do them

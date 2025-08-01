@@ -1,34 +1,21 @@
-#include <format>                                                                 // format()
-#include <iomanip>                                                                // quoted()
-#include <iostream>                                                               // cout, cin, clog ostream, istream, print()
-#include <string>                                                                 // string
-#include <utility>                                                                // move()
-
-#include "Student.hpp"
+module;                                                                               // Global fragment (not part of the module)
+  // should be removed when #include "quoted_string_patch.inc" below is removed
+  #include <version>
 
 
 
 
+/***********************************************************************************************************************************
+**  Module CSUF.CPSC131.Student Implementation
+**
+***********************************************************************************************************************************/
+module CSUF.CPSC131.Student;                                                          // Primary Module Interface Definition
+import std;
 
 
 
-
-/*******************************************************************************
-** Private working area for non-member functions, types, etc
-*******************************************************************************/
-namespace     // unnamed, anonymous namespace
-{
-  enum class Trace {On, Off};
-  constexpr Trace tracing = Trace::Off;
-}
-
-
-
-
-
-
-
-
+enum class Trace {On, Off};
+constexpr Trace tracing = Trace::Off;
 namespace CSUF::CPSC131
 {
   /*****************************************************************************
@@ -43,7 +30,7 @@ namespace CSUF::CPSC131
     // Unlike a traditional "if" statement, "if constexpr" statement is evaluated at compile time instead of run time. Sense we know
     // at compile time if we want tracing on or off, we can optimize a little by using a compile time decision
     if constexpr( tracing == Trace::On )    std::print( std::clog, "+{:>30} {} - Default Constructor:  Student()\n", *this, this );
- }
+  }
 
 
 
@@ -169,10 +156,10 @@ namespace CSUF::CPSC131
   }
 
 
-
+  #include "quoted_string_patch.inc"
   std::istream & operator>>( std::istream & is, Student & student )
   {
-    is >> std::quoted( student._name )
+    is >> quoted( student._name )                                                     // replace with std::quoted after gcc fixes it's module export problem
        >> student._id
        >> student._numOfSemesters;
 
@@ -180,6 +167,14 @@ namespace CSUF::CPSC131
   }
 
 }    // namespace CSUF::CPSC131
+
+
+
+
+
+
+
+
 
 
 
@@ -199,9 +194,9 @@ namespace CSUF::CPSC131
 ***********************************************************************************************************************************/
 
 /**************************************************
-** Last modified:  08-JUN-2025
-** Last Verified:  11-JUN-2025
-** Verified with:  MS Visual Studio 2022 Version 17.14.4,  Compiler Version 19.44.35209 (C++latest)
-**                 GCC version 15.1.0 (-std=c++23 ),
+** Last modified:  27-JUL-2025 (Converted to C++ Modules)
+** Last Verified:  27-JUL-2025
+** Verified with:  MS Visual Studio 2022 Version 17.14.9,  Compiler Version 19.44.35213 (/std:c++latest)
+**                 GCC version 15.1.0 (-std=c++23 )
 **                 Clang version 21.0.0 (-std=c++23 -stdlib=libc++)
 ***************************************************/

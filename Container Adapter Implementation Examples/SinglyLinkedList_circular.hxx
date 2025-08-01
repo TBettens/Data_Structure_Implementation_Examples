@@ -1,1 +1,0 @@
-../Sequence Container Implementation Examples/SinglyLinkedList/SinglyLinkedList_circular.hxx

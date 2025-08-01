@@ -1,19 +1,17 @@
-#pragma once
-
-#include <cstddef>                                                                // size_t
-#include <cstdint>                                                                // uintptr_t
-#include <format>                                                                 // format(), formatter
-#include <iostream>                                                               // cin, cout, istream, ostream, print(), println()
-#include <string>                                                                 // string
+module;                                                                           // Global fragment (not part of the module)
+  // Empty
 
 
 
 
+/***********************************************************************************************************************************
+**  Module CSUF.CPSC131.Student Interface
+**
+***********************************************************************************************************************************/
+export module CSUF.CPSC131.Student;                                               // Primary Module Interface Definition
+import std;
 
-
-
-
-namespace CSUF::CPSC131
+export namespace CSUF::CPSC131
 {
   class Student
   {
@@ -57,7 +55,7 @@ namespace CSUF::CPSC131
 
   std::istream & operator>>( std::istream & is,       CSUF::CPSC131::Student & student );
   std::ostream & operator<<( std::ostream & os, const CSUF::CPSC131::Student & student );
-}    // namespace CSUF::CPSC131
+}    // export namespace CSUF::CPSC131
 
 
 
@@ -65,7 +63,7 @@ namespace CSUF::CPSC131
 
 
 
-
+// Not exported but reachable
 /***********************************************************************************************************************************
 ** Template definitions
 ***********************************************************************************************************************************/
@@ -125,8 +123,8 @@ struct std::formatter<CSUF::CPSC131::Student *> : std::formatter<std::string>
   auto format( const CSUF::CPSC131::Student * ptr, auto & ctx ) const
   {
     // Considered and discarded the{:L} descriptor because it did not group short, zero-filled numbers (ex: 0x00002F03'BD10  )
-    //    std::string str = std::format( loc, "0x{:014LX}", reinterpret_cast<std::uintptr_t>( ptr ) );
-    //    which now means I could remove the tailored struct numpunct above.  But I'll keep it as a future reference.
+    //    std::string str = std::format( loc, "0x{:014LX}", reinterpret_cast<std::uintptr_t>( ptr ) ); which now means I could
+    //    remove the tailored struct numpunct above.  But I'll keep it as a future reference.
     //
     // Considered and discarded the {:#p} or {:#P} descriptors because they could not be grouped with {:L}.  I also wanted a
     //    lowercase 0x and uppercase hex digits but {:p} and {:P} were all one way or the other.
@@ -136,6 +134,43 @@ struct std::formatter<CSUF::CPSC131::Student *> : std::formatter<std::string>
     return std::formatter<std::string>::format( str, ctx );
   }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/***********************************************************************************************************************************
+**  Module CSUF.CPSC131.Student Private Implementation
+**
+**  Design Decision:  I seriously considered moving the module's implementation unit (Student.cpp file contents) into this file as a
+**                    private module fragment (module :private), but ultimately decided against it at this time. First, GCC doesn't
+**                    implement private fragments and instead issues a non-suppressible error (a show stopper). Second, overwhelming
+**                    "best practices" still suggest to separate even amongst the large community of "header only" advocates mainly
+**                    for 1) stronger encapsulation and intellectual property protection, but also 2) because the tools aren't yet
+**                    smart enough to stop cascading recompiles when the module's purview hasn't changed. While I respect the
+**                    "header only" design pattern, my extensive experience has shown again and again "separate files" is the right
+**                    answer.
+**
+**                    In either case, it is important to separate interface from implementation, which is why the lazy pattern of
+**                    implementing functions "inline" as part of the class definition is consistently avoided.
+***********************************************************************************************************************************/
+// module :private;
+
+
+
+
+
+
+
 
 
 
@@ -156,9 +191,9 @@ struct std::formatter<CSUF::CPSC131::Student *> : std::formatter<std::string>
 ***********************************************************************************************************************************/
 
 /**************************************************
-** Last modified:  08-JUN-2025
-** Last Verified:  11-JUN-2025
-** Verified with:  MS Visual Studio 2022 Version 17.14.4,  Compiler Version 19.44.35209 (C++latest)
-**                 GCC version 15.1.0 (-std=c++23 ),
+** Last modified:  27-JUL-2025 (Converted to C++ Modules)
+** Last Verified:  27-JUL-2025
+** Verified with:  MS Visual Studio 2022 Version 17.14.9,  Compiler Version 19.44.35213 (/std:c++latest)
+**                 GCC version 15.1.0 (-std=c++23 )
 **                 Clang version 21.0.0 (-std=c++23 -stdlib=libc++)
 ***************************************************/

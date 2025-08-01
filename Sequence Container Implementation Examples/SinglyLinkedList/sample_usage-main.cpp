@@ -1,15 +1,6 @@
-#include <exception>                                                                            // exception
-#include <format>
-#include <iostream>                                                                             // print(), println(), cout, cerr
-#include <iterator>                                                                             // next()
-#include <locale>                                                                               // global()
-#include <sstream>                                                                              // ostringstream
-#include <string>
-
-#include "SinglyLinkedList.hpp"
-#include "Student.hpp"
-
-
+import std;
+import CSUF.CPSC131.Student;
+import CSUF.CPSC131.SinglyLinkedList;
 
 namespace  // unnamed, anonymous namespace
 {
@@ -21,7 +12,7 @@ namespace  // unnamed, anonymous namespace
   void runExtendedInterfaceDriver()
   {
     // Create and fill a list with strings with an easily visible order
-    CSUF::CPSC131::SinglyLinkedList<std::string> mySll{ "A", "B", "C", "D", "E" };
+    CSUF::CPSC131::SinglyLinkedList<std::string, CSUF::CPSC131::SllPolicy::NTL> mySll{ "A", "B", "C", "D", "E" };
 
 
 
@@ -43,15 +34,19 @@ namespace  // unnamed, anonymous namespace
 
 
     // Reverse a copy of the list
-    auto myCodpiedSll{ mySll };
-    myCodpiedSll.reverse();
+    auto myCopiedSll{ mySll };
+    myCopiedSll.reverse();
 
     std::print( std::cout, "\n\n\nRecursively reverse the contents of the list\n"
                            "{3}\n"
                            "{0:>3}: Before: {1:n:}\n"
-                           "   " ": After:  {2:n:}\n"
+                           "   "
+                           ": After:  {2:n:}\n"
                            "{3}\n",
-                           ++count, mySll, myCodpiedSll, banner );
+                ++count,
+                mySll,
+                myCopiedSll,
+                banner );
 
 
 
@@ -128,7 +123,7 @@ int main()
 
     // Display all the students in order
     std::cout << "Range-based for loop traversal:\n";
-    for( const auto & student : students ) std::print( std::cout, "{}   ", student);            // uses SinglyLinkedList::begin() and SinglyLinkedList::end() member functions
+    for( const auto & student : students ) std::print( std::cout, "{}\n", student);             // uses SinglyLinkedList::begin() and SinglyLinkedList::end() member functions
     std::print( std::cout, "\n\n");
 
 
@@ -164,5 +159,8 @@ int main()
 // For testing purposes, explicitly instantiate the class template.  Template class member functions are only instantiated, and thus
 // semantically checked by the compiler, when used.  Explicitly instantiating the class forces all the member functions to be
 // instantiated, and thus semantically checked by the compiler.  It enables the compiler to find errors in your code.
-template class CSUF::CPSC131::SinglyLinkedList<int>;
-template class CSUF::CPSC131::SinglyLinkedList<std::string>;
+template class CSUF::CPSC131::SinglyLinkedList<int,         CSUF::CPSC131::SllPolicy::CIRCULAR>;
+template class CSUF::CPSC131::SinglyLinkedList<std::string, CSUF::CPSC131::SllPolicy::CIRCULAR>;
+
+template class CSUF::CPSC131::SinglyLinkedList<int,         CSUF::CPSC131::SllPolicy::NTL>;
+template class CSUF::CPSC131::SinglyLinkedList<std::string, CSUF::CPSC131::SllPolicy::NTL>;

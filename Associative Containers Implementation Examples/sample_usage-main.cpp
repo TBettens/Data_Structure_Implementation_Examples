@@ -1,12 +1,5 @@
-#include <exception>
-#include <format>
-#include <iomanip>
-#include <iostream>
-#include <string>
-#include <iterator>   // next(), prev(), advance(), reverse_iterator
-
-#include "BST-AVL.hpp"
-
+import std;
+import CSUF.CPSC131.BinarySearchTree;
 
 
 int main()

@@ -24,21 +24,26 @@
 ** The Queue ADT's interface is a small subset of std::queue defined at https://en.cppreference.com/w/cpp/container/queue
 **
 ***********************************************************************************************************************************/
-#pragma once
-
-#include <algorithm>                                                              // min
-#include <array>                                                                  // size(), begin() (really any standard container header provides these)
-#include <cstddef>                                                                // size_t
-#include <format>                                                                 // format, formatter, range_formatter
-#include <ranges>                                                                 // views::counted(), views::join()
-#include <stdexcept>                                                              // out_of_range
-#include <type_traits>                                                            // conditional_t, is_bounded_array_v
-#include <utility>                                                                // move()
-
-#include "ExceptionString.hpp"
-#include "SinglyLinkedList.hpp"
+module;                                                                               // Global fragment (not part of the module)
+  // should be removed when #include "adapter_container_formatting_patch.inc" below is removed
+  #include <version>
 
 
+
+
+
+
+
+
+
+/***********************************************************************************************************************************
+**  Module CSUF.CPSC131.Stack Interface
+**
+***********************************************************************************************************************************/
+export module CSUF.CPSC131.Queue;
+import std;
+import CSUF.CPSC131.exceptionString;
+import CSUF.CPSC131.SinglyLinkedList;
 
 
 
@@ -55,7 +60,7 @@
 
 
 
-namespace CSUF::CPSC131
+export namespace CSUF::CPSC131
 {
   /*********************************************************************************************************************************
   ** Queue class definition 1
@@ -97,18 +102,6 @@ namespace CSUF::CPSC131
     private:
       UnderlyingContainer _collection;                                            // delegate object management
   }; // Queue_Over_List
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -157,18 +150,6 @@ namespace CSUF::CPSC131
       std::size_t         _front = 0;                                             // index of the value at the front of the queue
       UnderlyingContainer _collection;                                            // delegate object management
   }; // Queue_Over_Vector
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -233,58 +214,51 @@ namespace CSUF::CPSC131
 
 
 
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  // Concepts
+  //
+  // Queue helper concepts used to select which end of the underlying container to use.  You have to push and pop from different
+  // ends, but which end makes a difference.  Some containers allow pushing to the back, but not popping from the back (SSL with a
+  // tail pointer, for example).  So we'll define double ended as being able to push to the back and pop from the front.  Using the
+  // wrong end of the container could result in a linear-time (O(n)) operation instead of the required constant-time (O(1))
+  // operation.
+  template <typename Container>
+  concept is_list_like = requires(Container c)
+  { // all are required
+    c.push_back( c.front() );
+    c.pop_front();
+    c.front();
+    c.back();
+    c.size();
+  };
 
 
 
+  // Vector-like containers usually dynamically allocate storage, have variable size, maintain capacity, and are indexable in
+  // constant time. Capacity may be either fixed or extendable.  Values are added to extendable capacity containers in amortized
+  // constant time.
+  template<typename Container>
+  concept is_vector_like = requires(Container c)
+  { // all are required
+    c[0u];
+    c.at(0u);
+    c.size();
+    c.capacity();
+    c.push_back( c.at(0u) );
+  };
 
 
 
+  // Array-like containers are also indexable in constant time but, unlike Vector-like containers, have fixed size and usually
+  // statically allocate storage.  Every slot in the array is always populated with a value.  There is no notion of adding to or
+  // removing from an array - the size is always constant.
+  template<typename Container>
+  concept is_array_like = std::is_bounded_array_v<Container> || requires( Container c )
+  { // all are required
+    c[0u];
+    std::size(c);   // Note this is std::size(), not c.size() - native arrays don't have .size() but they do have std::size()
+  };
 
-
-
-
-
-
-  #ifndef CSUF_CPSC131_QUEUE_HELPER_CONCEPTS
-  #define CSUF_CPSC131_QUEUE_HELPER_CONCEPTS
-    // Queue helper concepts used to select which end of the underlying container to use.  You have to push and pop from different
-    // ends, but which end makes a difference.  Some containers allow pushing to the back, but not popping from the back (SSL with a
-    // tail pointer, for example).  So we'll define double ended as being able to push to the back and pop from the front.  Using
-    // the wrong end of the container could result in a linear-time (O(n)) operation instead of the required constant-time (O(1))
-    // operation.
-    template <typename Container>
-    concept is_list_like = requires(Container c)
-    { // all are required
-      c.push_back( c.front() );
-      c.pop_front();
-      c.front();
-      c.back();
-      c.size();
-    };
-
-    // Vector-like containers usually dynamically allocate storage, have variable size, maintain capacity, and are indexable in
-    // constant time. Capacity may be either fixed or extendable.  Values are added to extendable capacity containers in amortized
-    // constant time.
-    template<typename Container>
-    concept is_vector_like = requires(Container c)
-    { // all are required
-      c[0u];
-      c.at(0u);
-      c.size();
-      c.capacity();
-      c.push_back( c.at(0u) );
-    };
-
-    // Array-like containers are also indexable in constant time but, unlike Vector-like containers, have fixed size and usually
-    // statically allocate storage.  Every slot in the array is always populated with a value.  There is no notion of adding to or
-    // removing from an array - the size is always constant.
-    template<typename Container>
-    concept is_array_like = std::is_bounded_array_v<Container> || requires( Container c )
-    { // all are required
-      c[0u];
-      std::size(c);   // Note this is std::size(), not c.size() - native arrays don't have .size() but they do have std::size()
-    };
-  #endif
 
 
   // Static polymorphic selection of Queue implantation.  Selects the implementation that matches the container's properties
@@ -293,7 +267,10 @@ namespace CSUF::CPSC131
                 std::conditional_t< is_vector_like< Container >,  Queue_Over_Vector< T, Container >,
                 std::conditional_t< is_array_like < Container >,  Queue_Over_Array < T, Container >,
                                                                   void                            > > >;
-}  // namespace CSUF::CPSC131
+}  // export namespace CSUF::CPSC131
+
+
+#include "adapter_container_formatting_patch.inc"
 
 
 
@@ -309,14 +286,14 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
-/**********************************************************************************************************************************
-***********************************************************************************************************************************
-**  PRIVATE  IMPLEMENTATIONS
-**
-**********************************************************************************************************************************/
+// Not exported but reachable
+/***********************************************************************************************************************************
+************************************************************************************************************************************
+** Template Implementation
+*
+** Separating Interface from Implementation is an extremely important concept I hope students will come to appreciate.
+************************************************************************************************************************************
+***********************************************************************************************************************************/
 
 // Queue Over List
 namespace CSUF::CPSC131
@@ -356,16 +333,10 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
   // pop()
   template<typename T, typename UnderlyingContainer>
   void Queue_Over_List<T, UnderlyingContainer>::pop()
   { _collection.pop_front(); }                                                                  // must push and pop at opposite ends
-
-
-
 
 
 
@@ -376,16 +347,10 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
   // front()
   template<typename T, typename UnderlyingContainer>
   T & Queue_Over_List<T, UnderlyingContainer>::front()
   { return _collection.front(); }
-
-
-
 
 
 
@@ -396,16 +361,10 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
   // back()
   template<typename T, typename UnderlyingContainer>
   T & Queue_Over_List<T, UnderlyingContainer>::back()
   { return _collection.back (); }
-
-
-
 
 
 
@@ -416,26 +375,11 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
   // size() const
   template<typename T, typename UnderlyingContainer>
   std::size_t Queue_Over_List<T, UnderlyingContainer>::size() const noexcept
   { return _collection.size(); }
 }    // namespace, Queue Over List
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -529,9 +473,6 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
   // pop()
   template<typename T, typename UnderlyingContainer>
   void Queue_Over_Vector<T, UnderlyingContainer>::pop()                                         // must push and pop at opposite ends
@@ -547,16 +488,10 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
   // front() const
   template<typename T, typename UnderlyingContainer>
   const T & Queue_Over_Vector<T, UnderlyingContainer>::front() const
   { return const_cast<Queue_Over_Vector<T, UnderlyingContainer> *>(this)->front(); }            // delegate to the read-write version of Queue_Over_Vector::front
-
-
-
 
 
 
@@ -570,16 +505,10 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
   // back() const
   template<typename T, typename UnderlyingContainer>
   const T & Queue_Over_Vector<T, UnderlyingContainer>::back() const
   { return const_cast<Queue_Over_Vector<T, UnderlyingContainer> *>(this)->back(); }             // delegate to the read-write version of Queue_Over_Vector::back
-
-
-
 
 
 
@@ -594,9 +523,6 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
   // empty() const
   template<typename T, typename UnderlyingContainer>
   bool Queue_Over_Vector<T, UnderlyingContainer>::empty() const noexcept
@@ -604,16 +530,10 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
   // size() const
   template<typename T, typename UnderlyingContainer>
   std::size_t Queue_Over_Vector<T, UnderlyingContainer>::size() const noexcept
   { return _size; }
-
-
-
 
 
 
@@ -633,18 +553,6 @@ namespace CSUF::CPSC131
     return true;
   }
 }  // namespace,  Queue Over Vector
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -692,9 +600,6 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
   // Copy constructor
   template<typename T, typename UnderlyingContainer>
   Queue_Over_Array<T, UnderlyingContainer>::Queue_Over_Array( Queue_Over_Array const & other )
@@ -705,9 +610,6 @@ namespace CSUF::CPSC131
     // copy the values while incrementing size
     for( std::size_t j = other._front;  _size < extent;  j = (j+1) % other.CAPACITY, ++_size )   _collection[_size] = other._collection[j];
   }
-
-
-
 
 
 
@@ -724,15 +626,9 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
   // Destructor
   template<typename T, typename UnderlyingContainer>
   Queue_Over_Array<T, UnderlyingContainer>::~Queue_Over_Array() noexcept = default;
-
-
-
 
 
 
@@ -760,9 +656,6 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
   // Move assignment
   template<typename T, typename UnderlyingContainer>
   Queue_Over_Array<T, UnderlyingContainer> & Queue_Over_Array<T, UnderlyingContainer>::operator=( Queue_Over_Array && rhs ) noexcept
@@ -787,9 +680,6 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
   // push()
   template<typename T, typename UnderlyingContainer>
   void Queue_Over_Array<T, UnderlyingContainer>::push( const T & value )              // must push and pop at opposite ends
@@ -802,9 +692,6 @@ namespace CSUF::CPSC131
     _collection[rear] = value;
     ++_size;
   }
-
-
-
 
 
 
@@ -823,16 +710,10 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
   // front() const
   template<typename T, typename UnderlyingContainer>
   const T & Queue_Over_Array<T, UnderlyingContainer>::front() const
   { return const_cast<Queue_Over_Array<T, UnderlyingContainer> *>(this)->front(); }   // delegate to the read-write version of Queue_Over_Vector::front
-
-
-
 
 
 
@@ -846,16 +727,10 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
   // back() const
   template<typename T, typename UnderlyingContainer>
   const T & Queue_Over_Array<T, UnderlyingContainer>::back() const
   { return const_cast<Queue_Over_Array<T, UnderlyingContainer> *>(this)->back(); }    // delegate to the read-write version of Queue_Over_Vector::back
-
-
-
 
 
 
@@ -870,9 +745,6 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
   // empty() const
   template<typename T, typename UnderlyingContainer>
   bool Queue_Over_Array<T, UnderlyingContainer>::empty() const noexcept
@@ -880,16 +752,10 @@ namespace CSUF::CPSC131
 
 
 
-
-
-
   // size() const
   template<typename T, typename UnderlyingContainer>
   std::size_t Queue_Over_Array<T, UnderlyingContainer>::size() const noexcept
   { return _size; }
-
-
-
 
 
 
@@ -909,9 +775,6 @@ namespace CSUF::CPSC131
     return true;
   }
 }    // namespace CSUF::CPSC131
-
-
-
 
 
 
@@ -1000,7 +863,6 @@ struct std::formatter<CSUF::CPSC131::Queue_Over_Array<T, UnderlyingContainer>> :
 
 
 
-
 /***********************************************************************************************************************************
 ** (C) Copyright 2025 by Thomas Bettens. All Rights Reserved.
 **
@@ -1013,9 +875,11 @@ struct std::formatter<CSUF::CPSC131::Queue_Over_Array<T, UnderlyingContainer>> :
 ***********************************************************************************************************************************/
 
 /**************************************************
-** Last modified:  14-JUN-2025
-** Last Verified:  29-JUN-2025
-** Verified with:  MS Visual Studio 2022 Version 17.14.4,  Compiler Version 19.44.35209 (C++latest)
-**                 GCC version 15.1.1 (-std=c++23 ),
+** Last modified:  27-JUL-2025 (Converted to C++ Modules)
+** Last Verified:  27-JUL-2025
+** Verified with:  !!MS Visual Studio 2022 Version 17.14.9,  Compiler Version 19.44.35213 (/std:c++latest)
+**                   - Link error: invalid or corrupt file: duplicate COMDAT '...'
+**                     names too long
+**                 GCC version 15.1.0 (-std=c++23 )
 **                 Clang version 21.0.0 (-std=c++23 -stdlib=libc++)
 ***************************************************/

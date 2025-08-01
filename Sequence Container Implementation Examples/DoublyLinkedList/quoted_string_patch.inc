@@ -1,0 +1,1 @@
+../../Common/quoted_string_patch.inc

@@ -1,1 +1,0 @@
-../Sequence Container Implementation Examples/DoublyLinkedList/DoublyLinkedList_circular.hxx

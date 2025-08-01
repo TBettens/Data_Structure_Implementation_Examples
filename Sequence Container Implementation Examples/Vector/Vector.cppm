@@ -21,24 +21,22 @@
 **  vector destructed when removed from the vector without releasing the space thus
 **  maintaining capacity whist decreasing size.
 ***********************************************************************************************************************************/
-#pragma once
-
-#include <algorithm>                                                      // swap(), move(), move_backward(), shift_left(), shift_right(), copy(), copy_n(), min()
-#include <string>                                                         // string, to_string()
-#include <compare>                                                        // weak_ordering, compare_weak_order_fallback()
-#include <cstddef>                                                        // size_t, byte
-#include <initializer_list>                                               // initializer_list
-#include <memory>                                                         // unique_ptr, make_unique(), uninitialized_copy(), uninitialized_move(), uninitialized_move_n(), uninitialized_value_construct_n(), construct_at(), destroy()
-#include <stdexcept>                                                      // out_of_range, overflow_error, underflow_error
-#include <type_traits>                                                    // aligned_storage
-#include <utility>                                                        // move()
-
-
-#include "ExceptionString.hpp"
+module;                                                                   // Global fragment (not part of the module)
+  // Empty
 
 
 
-namespace CSUF::CPSC131
+
+/***********************************************************************************************************************************
+**  Module CSUF.CPSC131.Vector Interface
+**
+***********************************************************************************************************************************/
+export module CSUF.CPSC131.Vector;                                        // Primary Module Interface Definition
+import std;
+import CSUF.CPSC131.exceptionString;
+
+
+export namespace CSUF::CPSC131
 {
   // Template Class Definition - Vector's Abstract Data Type Interface:
   enum class VectorPolicy {FIXED, EXTENDABLE};
@@ -149,9 +147,9 @@ namespace CSUF::CPSC131
       std::unique_ptr<RawMemory[]>  _array    = nullptr;                  // Smart pointer to dynamically allocated array
 
       // Helper functions
-      void reserve( size_t newCapacity );                                 // Helper function to change capacity (extendable vector only)
+      void reserve( std::size_t newCapacity );                            // Helper function to change capacity (extendable vector only)
   };
-}    // namespace CSUF::CPSC131
+}    // export namespace CSUF::CPSC131
 
 
 
@@ -167,9 +165,10 @@ namespace CSUF::CPSC131
 
 
 
+// Not exported but reachable
 /***********************************************************************************************************************************
 ************************************************************************************************************************************
-** Private Implementation
+** Template Implementation
 *
 ** Separating Interface from Implementation is an extremely important concept I hope students will come to appreciate.
 ************************************************************************************************************************************
@@ -906,8 +905,10 @@ namespace CSUF::CPSC131
     swap( lhs._capacity, rhs._capacity );
     swap( lhs._array,    rhs._array );
   }
-
 }    // namespace CSUF::CPSC131
+
+
+
 
 
 
@@ -932,9 +933,9 @@ namespace CSUF::CPSC131
 ***********************************************************************************************************************************/
 
 /**************************************************
-** Last modified:  08-JUN-2025  (added constexpr and noexcept to iterators)
-** Last Verified:  11-JUN-2025
-** Verified with:  MS Visual Studio 2022 Version 17.14.4,  Compiler Version 19.44.35209 (C++latest)
-**                 GCC version 15.1.0 (-std=c++23 ),
+** Last modified:  27-JUL-2025 (Converted to C++ Modules)
+** Last Verified:  27-JUL-2025
+** Verified with:  MS Visual Studio 2022 Version 17.14.9,  Compiler Version 19.44.35213 (/std:c++latest)
+**                 GCC version 15.1.0 (-std=c++23 )
 **                 Clang version 21.0.0 (-std=c++23 -stdlib=libc++)
 ***************************************************/

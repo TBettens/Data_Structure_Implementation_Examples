@@ -1,0 +1,1 @@
+../Common/adapter_container_formatting_patch.inc

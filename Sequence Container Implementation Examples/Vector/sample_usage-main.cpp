@@ -1,12 +1,6 @@
-#include <exception>
-#include <iostream>
-#include <locale>                                                                   // global()
-#include <string>
-#include <vector>
-
-#include "Student.hpp"
-#include "Vector.hpp"
-
+import std;
+import CSUF.CPSC131.Student;
+import CSUF.CPSC131.Vector;
 
 
 namespace    // anonymous
@@ -26,7 +20,7 @@ namespace    // anonymous
     vector.push_back( Student( "Dolores", 3 ) );
 
     // Programming Note:
-    //   Providing an range-underlying-spec (the stuff after the second colon) disables debug format, which causes the stuff in the
+    //   Providing a range-underlying-spec (the stuff after the second colon) disables debug format, which causes the stuff in the
     //   container to be formatted as an escaped string (like :?s does for string
     //   See https://en.cppreference.com/w/cpp/utility/format/range_formatter.html  std::range_formatter::parse section:
     //    "It calls underlying_.set_debug_format() if: ... there is no range-underlying-spec.
