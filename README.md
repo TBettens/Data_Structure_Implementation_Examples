@@ -43,7 +43,7 @@
         5. Three-way Comparison
         6. Life-Span Tracing
     2. Provides Formatting examples by specializing std::format
-    3. Provide an example of sperating a module's interface unit from it's implmentation unit.
+    3. Provides an example of separating a module's interface unit from it's implementation unit.
 
 
 ### Notes: This repository uses symbolic links
