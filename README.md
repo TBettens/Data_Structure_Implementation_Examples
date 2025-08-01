@@ -49,7 +49,7 @@
 ### Notes: This repository uses symbolic links
 1.  If Downloading
     1. On Linux, simply unzip the file with `unzip filename.zip`
-    2. On Windows, yes Windows supports symlink but the build in extractor (right click on the .zip file and select Extract All) does NOT restore the links.  If the content of your restored file looks something like `../Sequence Container Implementation Examples/Vector/Vector.cppm`, you did not restore the link. You created a text file containing the link's value.  Instead, use a tool that does restore links, such as 7zip.<br/><br/>
+    2. On Windows, yes Windows supports symlink but the built in extractor (right click on the .zip file and select Extract All) does NOT restore the links.  If the content of your restored file looks something like `../Sequence Container Implementation Examples/Vector/Vector.cppm`, you did not restore the link; you've created a text file containing the link's value.  Instead, use a tool that does restore links, such as 7zip.<br/><br/>
       Tip: If you're using WSL, unzip the file from WSL's Linux command prompt as above
 2.  If Cloning:<br/>
     Windows 10+ users requires a couple extra settings so symbolic links get created and used correctly
